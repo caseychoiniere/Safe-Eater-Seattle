@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import MainStore from '../stores/MainStore'
+import SearchBar from './SearchBar.jsx'
 import AppBar from 'material-ui/AppBar';
 import FlatButton from 'material-ui/FlatButton';
 import IconButton from 'material-ui/IconButton';
 import IconMenu from 'material-ui/IconMenu';
 import Menu from 'material-ui/svg-icons/navigation/menu';
+import Search from 'material-ui/svg-icons/action/search';
 import MenuItem from 'material-ui/MenuItem';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
@@ -15,6 +17,8 @@ class Header extends Component {
     handleLogout = () => MainStore.handleLogout();
 
     toggleNav = () => MainStore.toggleNav();
+
+    toggleSearch = () => MainStore.toggleSearch();
 
     loggedIn = (props) => (
         MainStore.appConfig.apiToken ?
@@ -39,14 +43,15 @@ class Header extends Component {
     initiateLogin = () => MainStore.toggleLoading();
 
     render() {
-        const {appConfig} = MainStore;
+        const {appConfig, showSearch} = MainStore;
         return (
-            <AppBar
-                iconStyleLeft={!appConfig.apiToken ? {display: 'none'} : {}}
-                iconElementLeft={<IconButton><Menu onClick={this.toggleNav}/></IconButton>}
-                iconElementRight={this.loggedIn()}
-                style={{position: 'fixed'}}
-            />
+            showSearch ? <SearchBar /> :
+                <AppBar
+                    iconStyleLeft={!appConfig.apiToken ? {display: 'none'} : {}}
+                    iconElementLeft={<IconButton><Menu onClick={this.toggleNav}/></IconButton>}
+                    iconElementRight={<IconButton><Search onClick={this.toggleSearch}/></IconButton>}
+                    style={{position: 'fixed'}}
+                />
         );
     }
 }

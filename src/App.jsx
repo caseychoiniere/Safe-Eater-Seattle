@@ -10,6 +10,7 @@ class App extends Component {
 
     componentDidMount() {
         setInterval(() => MainStore.checkSessionTimeout(), 2000);
+        MainStore.setDateRange();
     };
 
     render() {
