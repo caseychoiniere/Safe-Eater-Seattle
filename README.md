@@ -1,3 +1,6 @@
+Safe Eater Seattle allows people to see public health inspection information about restaurants, bars and other food service establishments in Seattle.
+The app uses open [King County food establishment inspection data](https://data.kingcounty.gov/Health/Food-Establishment-Inspection-Data/f29f-zza5).
+
 This project uses [Create React App](https://github.com/facebookincubator/create-react-app) in addition to
 [Mobx](https://github.com/mobxjs/mobx) for state management, [React Router v4](https://github.com/ReactTraining/react-router) for routing and [Material-UI](http://www.material-ui.com/#/) for styled components.
 Mobx was added without ejecting the app via the [Custom React Scripts](https://www.npmjs.com/package/custom-react-scripts) package.
