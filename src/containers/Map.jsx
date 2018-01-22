@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 
-class Graph extends Component {
+class Map extends Component {
     render() {
         return (
             <div>
-                <h2>Graph</h2>
+                <h2>Map</h2>
             </div>
         );
     }
 }
 
-export default Graph;
+export default Map;

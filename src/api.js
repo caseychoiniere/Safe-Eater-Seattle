@@ -10,12 +10,6 @@ const path = Object.freeze({
 });
 
 const api = {
-    getProjects: () => {
-        return fetch(`${DDS_BASE_URI}/projects/?page=1&per_page=100`, getFetchParams('get', MainStore.appConfig.apiToken))
-    },
-    getAuthProviders: () => {
-        return fetch(`${DDS_BASE_URI}${path.AUTH_PROVIDERS}`, getFetchParams('get'))
-    },
     getApiToken: (accessToken, appConfig) => {
         return fetch(`${DDS_BASE_URI+path.ACCESS_TOKEN+accessToken}&authentication_service_id=${appConfig.serviceId}`, getFetchParams('get'))
     },
