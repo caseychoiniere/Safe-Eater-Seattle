@@ -2,40 +2,31 @@ import { observable, action } from 'mobx';
 import cookie from 'react-cookies';
 import moment from 'moment';
 import api from '../api';
-import appConfig from '../appConfig';
 import { checkStatus } from '../util/fetchUtil';
 
 export class MainStore {
-    @observable appConfig;
     @observable dateRange;
     @observable loading;
     @observable openNav;
     @observable pageNumber;
     @observable paginationLoading;
-    @observable projects;
     @observable restaurants;
     @observable restaurantsSearchResults;
     @observable searchLoading;
-    @observable sessionTimeoutWarning;
     @observable showPagination;
     @observable showSearch;
-    @observable user;
 
     constructor() {
-        this.appConfig = appConfig;
         this.dateRange = null;
         this.loading = false;
         this.openNav = false;
         this.pageNumber = 1;
         this.paginationLoading = false;
-        this.projects = [];
         this.restaurants = [];
         this.restaurantsSearchResults = null;
         this.searchLoading = false;
-        this.sessionTimeoutWarning = false;
         this.showPagination = true;
         this.showSearch = false;
-        this.user = null;
 
         this.api = api;
     }

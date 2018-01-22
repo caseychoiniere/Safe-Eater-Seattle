@@ -8,11 +8,12 @@ import CircularProgress from 'material-ui/CircularProgress'
 import Paper from 'material-ui/Paper'
 import RaisedButton from 'material-ui/RaisedButton'
 import {List, ListItem} from 'material-ui/List';
-import { blue200, red200 } from 'material-ui/styles/colors';
+import { blue200, red200, pink400 } from 'material-ui/styles/colors';
 import Warning from 'material-ui/svg-icons/alert/warning';
 
 @observer
 class Home extends Component {
+
     componentDidMount() {
         MainStore.getPublicHealthInspectionData();
     }
@@ -33,6 +34,11 @@ class Home extends Component {
     };
 
     render() {
+
+        const styles = {
+            loader: {position: 'fixed', top: 0, left: 0, bottom: 0, right: 0, margin: 'auto'},
+        };
+
         let {
             dateRange,
             loading,
@@ -42,6 +48,7 @@ class Home extends Component {
             restaurantsSearchResults,
             showPagination//Todo: remove showPagination if not used
         } = MainStore;
+
         restaurants = restaurantsSearchResults ? restaurantsSearchResults : restaurants;
 
         return (
@@ -49,10 +56,10 @@ class Home extends Component {
                     <Col key={generateUniqueKey()} md={12} >
                         {
                             loading
-                            ? <CircularProgress size={100} thickness={5} style={{position: 'fixed', top: '45%', left: '47%'}}/>
+                            ? <CircularProgress size={100} thickness={5} color={pink400} style={styles.loader}/>
                             : <Paper zDepth={2}>
                                 {
-                                    this.paginate(restaurants, 250, pageNumber).map((r) => {
+                                    this.paginate(restaurants, 50, pageNumber).map((r) => {
                                         let totalPoints = r.violations.reduce((a,b) => a + b.violation_points, 0);
                                         return (
                                                 <List key={generateUniqueKey()} style={{padding: 0}}>
@@ -88,7 +95,7 @@ class Home extends Component {
                                     <RaisedButton
                                         label={paginationLoading ? "Loading..." : "Load More"}
                                         secondary={true}
-                                        disabled={!!loading}
+                                        disabled={!!paginationLoading}
                                         onClick={()=>this.loadMore(pageNumber)}
                                         fullWidth={true}
                                     />
