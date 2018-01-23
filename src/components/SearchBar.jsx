@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import MainStore from '../stores/MainStore';
-import {debounce} from '../util/utils'
+import { debounce } from '../util/utils'
+import { grey50, pink900 } from 'material-ui/styles/colors';
 import CircularProgress from 'material-ui/CircularProgress';
 import IconButton from 'material-ui/IconButton';
 import Search from 'material-ui/svg-icons/action/search';
@@ -24,18 +25,62 @@ class SearchBar extends Component {
     }
 
     render() {
+
+        const styles = {
+            searchBar: {
+                backgroundColor: grey50,
+                position: 'fixed',
+                zIndex: 1100,
+                width: '100%',
+                display: 'flex',
+                height: 64,
+                hintText: {
+                    fontWeight: 100
+                },
+                closeSearchIcon: {
+                    position: 'absolute',
+                    right: 10,
+                    top: 8,
+                    zIndex: 9999
+                },
+                searchIcon: {
+                    position: 'absolute',
+                    left: 10,
+                    top: 8,
+                    zIndex: 9999
+                },
+                searchLoading: {
+                    position: 'absolute',
+                    right: 20,
+                    top: 20,
+                    zIndex: 9999
+                },
+                textField: {
+                    width: '80%',
+                    position: 'absolute',
+                    top: 8,
+                    left: 60
+                },
+                textFieldUnderline: {
+                    display: 'none'
+                }
+            }
+        };
+
         const { searchLoading, showSearch } = MainStore;
 
         return (showSearch ? <Paper className="navbar" style={styles.searchBar} zDepth={2}>
-            {!searchLoading ? <IconButton style={styles.searchBar.closeSearchIcon}>
-                <Close onClick={()=>this.showSearch()}/>
-            </IconButton> : <CircularProgress size={24} thickness={2} style={styles.searchBar.searchLoading}/>}
+            {!searchLoading ?
+                <IconButton style={styles.searchBar.closeSearchIcon}>
+                    <Close onClick={()=>this.showSearch()}/>
+                </IconButton> :
+                <CircularProgress size={24} thickness={2} color={pink900} style={styles.searchBar.searchLoading}/>}
             <TextField
                 ref="searchInput"
                 hintText="Search"
                 hintStyle={styles.searchBar.hintText}
                 onKeyUp={() => this.search()}
-                style={{width: '80%', position: 'absolute', top: 8, left: 60}}
+                style={styles.searchBar.textField}
                 underlineStyle={styles.searchBar.textFieldUnderline}
                 underlineFocusStyle={styles.searchBar.textFieldUnderline} />
             <IconButton style={styles.searchBar.searchIcon}>
@@ -50,46 +95,10 @@ class SearchBar extends Component {
     }
 
     showSearch() {
+        MainStore.resetSearchResults();
         MainStore.toggleSearch();
     }
 }
-
-const styles = {
-    searchBar: {
-        position: 'fixed',
-        zIndex: 1100,
-        width: '100%',
-        display: 'flex',
-        height: 64,
-        borderRadius: 0,
-        closeSearchIcon: {
-            position: 'absolute',
-            right: 10,
-            top: 8,
-            cursor: 'pointer',
-            zIndex: 9999
-        },
-        hintText: {
-            fontWeight: 100
-        },
-        searchIcon: {
-            position: 'absolute',
-            left: 10,
-            top: 8,
-            cursor: 'pointer',
-            zIndex: 9999
-        },
-        searchLoading: {
-            position: 'absolute',
-            right: 20,
-            top: 20,
-            zIndex: 9999
-        },
-        textFieldUnderline: {
-            display: 'none'
-        }
-    }
-};
 
 // Search.childContextTypes = {
 //     muiTheme: React.PropTypes.object

@@ -1,5 +1,4 @@
 import { observable, action } from 'mobx';
-import cookie from 'react-cookies';
 import moment from 'moment';
 import api from '../api';
 import { checkStatus } from '../util/fetchUtil';
@@ -13,7 +12,6 @@ export class MainStore {
     @observable restaurants;
     @observable restaurantsSearchResults;
     @observable searchLoading;
-    @observable showPagination;
     @observable showSearch;
 
     constructor() {
@@ -25,14 +23,9 @@ export class MainStore {
         this.restaurants = [];
         this.restaurantsSearchResults = null;
         this.searchLoading = false;
-        this.showPagination = true;
         this.showSearch = false;
 
         this.api = api;
-    }
-
-    @action showPaginationButton() {
-        this.showPagination = !this.showPagination;
     }
 
     @action setPaginationPageNumber(page) {
@@ -62,9 +55,8 @@ export class MainStore {
         this.showSearch = !this.showSearch;
     }
 
-    @action chunk(a, l) {
-        if (a.length === 0) return [];
-        else return [a.slice(0, l)].concat(this.chunk(a.slice(l), l));
+    @action resetSearchResults() {
+        this.restaurantsSearchResults = null;
     }
 
     @action getPublicHealthInspectionData() {
@@ -122,15 +114,12 @@ export class MainStore {
                             return {
                                 violation_date: el.inspection_date,
                                 violation_type: el.violation_type,
-                                violation_description: desc,
+                                violation_description: desc.slice(7),
                                 violation_points: Number(el.violation_points),
                             }
                         })
                     }
-                });
-
-                // this.restaurants = this.chunk(this.restaurants, 100); //Todo: include pagination
-
+                }).sort((a, b) => b.violations.length - a.violations.length);
                 this.loading = false;
             }).catch(ex => this.handleErrors(ex))
     }

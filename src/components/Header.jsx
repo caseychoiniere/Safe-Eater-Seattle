@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import MainStore from '../stores/MainStore'
 import SearchBar from './SearchBar.jsx'
+import {green700} from 'material-ui/styles/colors';
 import AppBar from 'material-ui/AppBar';
 import IconButton from 'material-ui/IconButton';
 import Menu from 'material-ui/svg-icons/navigation/menu';
@@ -21,7 +22,7 @@ class Header extends Component {
                 <AppBar
                     iconElementLeft={<IconButton><Menu onClick={this.toggleNav}/></IconButton>}
                     iconElementRight={<IconButton><Search onClick={this.toggleSearch}/></IconButton>}
-                    style={{position: 'fixed'}}
+                    style={{position: 'fixed', backgroundColor: green700}}
                 />
         );
     }
