@@ -64,7 +64,7 @@ class Map extends Component {
                            containerElement={<div style={{height: 280, padding: '0px 10px 0px 14px'}}/>}
                            mapElement={<div style={{height: '100%'}}/>}
                            defaultZoom={14}
-                           defaultCenter={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
+                           center={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
                            options={{disableDoubleClickZoom: true}}>
                            { selectedRestaurant && selectedRestaurant.lat ?
                                <Marker

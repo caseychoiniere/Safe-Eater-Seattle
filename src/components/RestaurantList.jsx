@@ -15,10 +15,6 @@ import Warning from 'material-ui/svg-icons/alert/warning';
 @observer
 class RestaurantList extends Component {
 
-    componentDidMount() {
-        // MainStore.getPublicHealthInspectionData(); //Todo: Should this go in Home.jsx?????????
-    }
-
     getRestaurantInfo = (restaurant) => {
         const { selectedRestaurant, showInfoWindow} = MainStore;
         if(selectedRestaurant && selectedRestaurant.id !== restaurant.id || selectedRestaurant === null) MainStore.getRestaurantInfo(restaurant);
@@ -81,11 +77,11 @@ class RestaurantList extends Component {
                                                       onClick={() => this.getRestaurantInfo(r)}
                                                       open={openNestedListItems.has(r.id)}
                                                       rightIconButton={<IconButton onClick={() => this.toggleNestedList(r.id)}><ArrowDropDown/></IconButton>}
-                                                      // primaryTogglesNestedList={true}
                                                       nestedItems={
                                                           r.violations.length > 0 && r.violations.map((v) => {
                                                               return <ListItem
                                                                   key={generateUniqueKey()}
+                                                                  disabled={true}
                                                                   hoverColor={v.violation_type === 'blue' ? blue200 : red200}
                                                                   primaryText={`${v.violation_type.toUpperCase()} - ${v.violation_points} points`}
                                                                   secondaryText={
