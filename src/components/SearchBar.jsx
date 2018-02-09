@@ -45,13 +45,13 @@ class SearchBar extends Component {
                 },
                 searchIcon: {
                     position: 'absolute',
-                    left: 10,
+                    left: 8,
                     top: 8,
                     zIndex: 9999
                 },
                 searchLoading: {
                     position: 'absolute',
-                    right: 20,
+                    left: 20,
                     top: 20,
                     zIndex: 9999
                 },
@@ -71,8 +71,8 @@ class SearchBar extends Component {
 
         return (showSearch ? <Paper className="navbar" style={styles.searchBar} zDepth={2}>
             {!searchLoading ?
-                <IconButton style={styles.searchBar.closeSearchIcon}>
-                    <Close onClick={()=>this.showSearch()}/>
+                <IconButton style={styles.searchBar.searchIcon}>
+                    <Search onClick={()=>this.search()}/>
                 </IconButton> :
                 <CircularProgress size={24} thickness={2} color={pink900} style={styles.searchBar.searchLoading}/>}
             <TextField
@@ -83,8 +83,8 @@ class SearchBar extends Component {
                 style={styles.searchBar.textField}
                 underlineStyle={styles.searchBar.textFieldUnderline}
                 underlineFocusStyle={styles.searchBar.textFieldUnderline} />
-            <IconButton style={styles.searchBar.searchIcon}>
-                <Search onClick={()=>this.search()}/>
+            <IconButton style={styles.searchBar.closeSearchIcon}>
+                <Close onClick={()=>this.showSearch()}/>
             </IconButton>
         </Paper> : null)
     }

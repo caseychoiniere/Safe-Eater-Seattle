@@ -2,30 +2,89 @@ import { observable, action } from 'mobx';
 import moment from 'moment';
 import api from '../api';
 import { checkStatus } from '../util/fetchUtil';
+const google = window.google;
 
 export class MainStore {
     @observable dateRange;
+    @observable graphData;
+    @observable hours;
     @observable loading;
     @observable openNav;
+    @observable openNestedListItems;
+    @observable mapObj;
     @observable pageNumber;
     @observable paginationLoading;
     @observable restaurants;
+    @observable restaurantDetails;
     @observable restaurantsSearchResults;
     @observable searchLoading;
+    @observable selectedRestaurant;
+    @observable selectedRestaurantViolations;
+    @observable showInfoWindow;
     @observable showSearch;
 
     constructor() {
         this.dateRange = null;
+        this.graphData = [];
+        this.hours = [];
         this.loading = false;
         this.openNav = false;
+        this.openNestedListItems = observable.map();
+        this.mapObj = null;
         this.pageNumber = 1;
         this.paginationLoading = false;
         this.restaurants = [];
+        this.restaurantDetails = {};
         this.restaurantsSearchResults = null;
         this.searchLoading = false;
+        this.selectedRestaurant = null;
+        this.selectedRestaurantViolations = observable.map();
+        this.showInfoWindow = false;
         this.showSearch = false;
 
         this.api = api;
+    }
+
+    @action getMapObject(map) {
+        const restaurant = this.selectedRestaurant;
+        if(map) {
+            this.mapObj = map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+            const loc = {lat: restaurant.lat, lng: restaurant.lng};
+            const _map = this.mapObj;
+            const service = new google.maps.places.PlacesService(_map);
+
+            service.nearbySearch({
+                location: loc,
+                radius: 1000,
+                name: restaurant.name
+            }, callback);
+
+            function callback(results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    let request = {
+                        placeId: results[0].place_id
+                    };
+
+                    service.getDetails(request, callback);
+
+                    function callback(details, status) {
+                        if (status === google.maps.places.PlacesServiceStatus.OK) {
+                            MainStore.restaurantDetails = details;
+                            if(details.opening_hours) MainStore.hours = details.opening_hours.weekday_text;
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    @action toggleNestedList(id) {
+        if(!this.openNestedListItems.has(id)) {
+            this.openNestedListItems.set(id, true)
+        } else {
+            this.openNestedListItems.delete(id)
+        }
     }
 
     @action setPaginationPageNumber(page) {
@@ -51,6 +110,39 @@ export class MainStore {
         this.dateRange = moment().subtract(range, 'months').format();
     }
 
+    @action getRestaurantInfo(restaurant) {
+        this.graphData = [];
+        this.selectedRestaurantViolations = observable.map();
+        this.restaurantDetails = null;
+        this.selectedRestaurant = restaurant;
+
+        this.selectedRestaurant.violations.forEach((v) => {
+            if(!this.selectedRestaurantViolations.has(v.violation_date)) {
+                this.selectedRestaurantViolations.set(v.violation_date, v.violation_points)
+            } else {
+                this.selectedRestaurantViolations.set(v.violation_date, this.selectedRestaurantViolations.get(v.violation_date) + v.violation_points);
+            }
+        });
+
+        const setGraphData = (value, key) => {
+            this.graphData.push({date: key, violation_points: value});
+        };
+
+        this.selectedRestaurantViolations.forEach(setGraphData);
+
+        this.averagePointsPerInspection = this.graphData.map((d) => {
+            return d.violation_points;
+        }).reduce(( p, c ) => p + c, 0 ) / this.graphData.length;
+
+        this.graphData = this.graphData.map(d => {
+            return {date: d.date, violation_points: d.violation_points, average_points_per_visit: this.averagePointsPerInspection}
+        });
+    }
+
+    @action toggleInfowindow() {
+        this.showInfoWindow = !this.showInfoWindow;
+    }
+
     @action toggleSearch() {
         this.showSearch = !this.showSearch;
     }
@@ -72,7 +164,7 @@ export class MainStore {
                        return {
                            id: j.business_id,
                            name: j.name,
-                           address: `${j.address}, ${j.city}, WA, ${j.zip_code}`,
+                           address: j.address,
                            description: j.description,
                            phone: j.phone,
                            latitude: j.latitude,
@@ -95,15 +187,12 @@ export class MainStore {
                     return {
                         id: j.id,
                         name: j.name,
-                        address: `${j.address}, ${j.city}, WA, ${j.zip_code}`,
+                        address: j.address,
                         phone: j.phone,
-                        latitude: j.latitude,
-                        longitude: j.longitude,
+                        lat: parseFloat(j.latitude),
+                        lng: parseFloat(j.longitude),
                         inspection_date: j.inspection_date,
                         inspection_serial_num: j.inspection_serial_num,
-                        violation_type: j.violation_type,
-                        violation_description: j.violation_description,
-                        violation_points: j.violation_points,
                         violations: data.filter((el) => {
                             return el.id === j.id;
                         }).map((el) => {
@@ -112,7 +201,7 @@ export class MainStore {
                                 desc = desc.slice(0,-1);
                             }
                             return {
-                                violation_date: el.inspection_date,
+                                violation_date: moment(el.inspection_date).format('MM/DD/YYYY'),
                                 violation_type: el.violation_type,
                                 violation_description: desc.slice(7),
                                 violation_points: Number(el.violation_points),

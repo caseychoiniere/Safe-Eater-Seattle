@@ -9,7 +9,7 @@ import MenuItem from 'material-ui/MenuItem';
 import NavigationClose from 'material-ui/svg-icons/navigation/close';
 
 @observer
-class LeftNav extends Component {
+class RightNav extends Component {
 
     toggleNav = () => { MainStore.toggleNav() };
 
@@ -21,6 +21,7 @@ class LeftNav extends Component {
                     docked={false}
                     open={openNav}
                     onRequestChange={this.toggleNav}
+                    openSecondary={true}
                 >
                     <AppBar style={{backgroundColor: green600}} iconElementLeft={<IconButton><NavigationClose onClick={this.toggleNav}/></IconButton>}/>
                     <MenuItem  style={{marginTop: 64}} onClick={this.toggleNav}>Menu Item</MenuItem>
@@ -31,4 +32,4 @@ class LeftNav extends Component {
     }
 }
 
-export default LeftNav;
+export default RightNav;

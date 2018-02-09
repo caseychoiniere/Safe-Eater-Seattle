@@ -20,8 +20,8 @@ class Header extends Component {
         return (
             showSearch ? <SearchBar /> :
                 <AppBar
-                    iconElementLeft={<IconButton><Menu onClick={this.toggleNav}/></IconButton>}
-                    iconElementRight={<IconButton><Search onClick={this.toggleSearch}/></IconButton>}
+                    iconElementLeft={<IconButton><Search onClick={this.toggleSearch}/></IconButton>}
+                    iconElementRight={<IconButton><Menu onClick={this.toggleNav}/></IconButton>}
                     style={{position: 'fixed', backgroundColor: green700}}
                 />
         );
