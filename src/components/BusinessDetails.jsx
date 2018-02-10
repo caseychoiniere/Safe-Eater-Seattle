@@ -55,7 +55,7 @@ class BusinessDetails extends Component {
                 {/*<ul>*/}
                     {/*{h}*/}
                 {/*</ul>*/}
-                <div style={{padding: '14px 14px 70px 14px'}}>
+                { hours.length ? <div style={{padding: '14px 14px 70px 14px'}}>
                     <Table>
                         <TableHeader displaySelectAll={false} adjustForCheckbox={false}>
                             <TableRow>
@@ -66,7 +66,7 @@ class BusinessDetails extends Component {
                             {h}
                         </TableBody>
                     </Table>
-                </div>
+                </div> : null}
             </div>
         )
     }
