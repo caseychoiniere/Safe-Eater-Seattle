@@ -5,6 +5,7 @@ import Drawer from 'material-ui/Drawer';
 import IconButton from 'material-ui/IconButton';
 import ArrowBack from 'material-ui/svg-icons/navigation/arrow-back';
 import MainStore from '../stores/MainStore';
+import Graph from './Graph.jsx';
 import BusinessDetails from './BusinessDetails.jsx';
 
 // const GoogleMapsWrapper = withScriptjs(withGoogleMap(props => {
@@ -57,11 +58,11 @@ class Map extends Component {
                            <ArrowBack />
                        </IconButton>
                        <h3 style={style.mapTitle}>{selectedRestaurant.name}</h3>
-                       {<BusinessDetails/>}
+                       <Graph />
                        <GoogleMapsWrapper
-                           googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyAzluYW2z_7GUyngCj_UyUJHROLYPfcsWc&v=3.exp&libraries=geometry,drawing,places"
+                           googleMapURL='https://maps.googleapis.com/maps/api/js?key=AIzaSyAzluYW2z_7GUyngCj_UyUJHROLYPfcsWc&v=3.exp&libraries=geometry,drawing,places'
                            loadingElement={<div style={{height: '60%'}}/>}
-                           containerElement={<div style={{height: 280, padding: '0px 10px 0px 14px'}}/>}
+                           containerElement={<div style={{height: 280, padding: '20px 10px 0px 20px'}}/>}
                            mapElement={<div style={{height: '100%'}}/>}
                            defaultZoom={14}
                            center={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
@@ -74,6 +75,7 @@ class Map extends Component {
                                /> : null
                            }
                        </GoogleMapsWrapper>
+                       <BusinessDetails />
            </Drawer>
         )
     }

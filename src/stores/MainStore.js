@@ -34,7 +34,7 @@ export class MainStore {
         this.pageNumber = 1;
         this.paginationLoading = false;
         this.restaurants = [];
-        this.restaurantDetails = {};
+        this.restaurantDetails = null;
         this.restaurantsSearchResults = null;
         this.searchLoading = false;
         this.selectedRestaurant = null;
@@ -47,35 +47,39 @@ export class MainStore {
 
     @action getMapObject(map) {
         const restaurant = this.selectedRestaurant;
+
         if(map) {
             this.mapObj = map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
             const loc = {lat: restaurant.lat, lng: restaurant.lng};
             const _map = this.mapObj;
             const service = new google.maps.places.PlacesService(_map);
 
-            service.nearbySearch({
-                location: loc,
-                radius: 1000,
-                name: restaurant.name
-            }, callback);
+            const nearbySearch = () => {
+                const request = {
+                    location: loc,
+                    radius: 1000,
+                    keyword: restaurant.name
+                };
+                return new Promise((resolve, reject) => {
+                    service.nearbySearch(request, (results, status) => {
+                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(results) : reject(status);
+                    });
+                });
+            };
 
-            function callback(results, status) {
-                if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    let request = {
-                        placeId: results[0].place_id
-                    };
+            const findDetail = (place) => {
+                return new Promise((resolve, reject) => {
+                    service.getDetails({placeId: place.place_id}, (place, status) => {
+                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(place) : reject(status);
+                    });
+                });
+            };
 
-                    service.getDetails(request, callback);
-
-                    function callback(details, status) {
-                        if (status === google.maps.places.PlacesServiceStatus.OK) {
-                            MainStore.restaurantDetails = details;
-                            if(details.opening_hours) MainStore.hours = details.opening_hours.weekday_text;
-                        }
-                    }
-
-                }
-            }
+            nearbySearch()
+                .then(results => findDetail(results[0]))
+                .then(details => {
+                    if (details.opening_hours) this.hours = details.opening_hours.weekday_text;
+                }).catch(e => this.hours = [])
         }
     }
 
@@ -170,6 +174,7 @@ export class MainStore {
                            latitude: j.latitude,
                            longitude: j.longitude,
                            inspection_date: j.inspection_date,
+                           inspection_closed_business: j.inspection_closed_business,
                            inspection_serial_num: j.inspection_serial_num,
                            violation_type: j.violation_type,
                            violation_description: j.violation_description,
@@ -192,6 +197,7 @@ export class MainStore {
                         lat: parseFloat(j.latitude),
                         lng: parseFloat(j.longitude),
                         inspection_date: j.inspection_date,
+                        inspection_closed_business: j.inspection_closed_business,
                         inspection_serial_num: j.inspection_serial_num,
                         violations: data.filter((el) => {
                             return el.id === j.id;
@@ -210,6 +216,8 @@ export class MainStore {
                     }
                 }).sort((a, b) => b.violations.length - a.violations.length);
                 this.loading = false;
+                const closedByInspection = this.restaurants.filter(r => r.inspection_closed_business);
+                console.log(closedByInspection)
             }).catch(ex => this.handleErrors(ex))
     }
 
