@@ -235,12 +235,6 @@ export class MainStore {
             if (error.response.status === 401) {
                 window.location.href = window.location.protocol + '//' + window.location.host + '/#/login';
             }
-            // else if (error.response.status === 404 && error.response.statusText !== '' && this.appConfig.apiToken) {
-            //     window.location.href = window.location.protocol + '//' + window.location.host + '/#/404';
-            //     console.log(error.response);
-            // } else {
-                // this.displayErrorModals(error);
-            // }
         }
     }
 

@@ -1,8 +1,6 @@
 import React, {Component} from 'react';
 import { observer } from 'mobx-react';
 import {AreaChart, BarChart, Bar, Area, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, Tooltip} from 'recharts';
-import Place from 'material-ui/svg-icons/maps/place';
-import Phone from 'material-ui/svg-icons/communication/phone';
 import MainStore from '../stores/MainStore';
 
 @observer
@@ -10,14 +8,10 @@ class Graph extends Component {
 
     render() {
         const style = {
-            closeBtn: { float: 'left', margin: '0px 0px 0px 6px' },
-            h4: {margin: '10px 14px'},
-            mapTitle: { textAlign: 'center', margin: '14px 12%' },
-            icon: { verticalAlign: 'bottom' },
             tick: {fontSize: 10}
         };
 
-        let { averagePointsPerInspection, graphData, hours, selectedRestaurant } = MainStore;
+        let { averagePointsPerInspection, graphData } = MainStore;
 
         const data = graphData.length ? graphData.slice() : [];
 

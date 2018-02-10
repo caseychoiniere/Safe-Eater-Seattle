@@ -21,18 +21,13 @@ import BusinessDetails from './BusinessDetails.jsx';
 const GoogleMapsWrapper = withGoogleMap(props => {
     const {onMapMounted, ...otherProps} = props;
     return <GoogleMap {...otherProps} ref={map => {
-        onMapMounted && onMapMounted(map)
-        console.log(map)
+        onMapMounted && onMapMounted(map);
         MainStore.getMapObject(map);
     }}>{props.children}</GoogleMap>
 });
 
 @observer
 class Map extends Component {
-
-    getMarkerId = (marker) => {
-        console.log(marker)
-    };
 
     toggleInfoWindow = () => {
       MainStore.toggleInfowindow();

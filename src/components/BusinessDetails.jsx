@@ -55,16 +55,18 @@ class BusinessDetails extends Component {
                 {/*<ul>*/}
                     {/*{h}*/}
                 {/*</ul>*/}
-                <Table>
-                    <TableHeader displaySelectAll={false} adjustForCheckbox={false}>
-                        <TableRow>
-                            <TableHeaderColumn>Hours</TableHeaderColumn>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody displayRowCheckbox={false}>
-                        {h}
-                    </TableBody>
-                </Table>
+                <div style={{padding: '14px 14px 70px 14px'}}>
+                    <Table>
+                        <TableHeader displaySelectAll={false} adjustForCheckbox={false}>
+                            <TableRow>
+                                <TableHeaderColumn style={{fontSize: 16, color: 'black'}}>Hours</TableHeaderColumn>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody displayRowCheckbox={false}>
+                            {h}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
         )
     }
