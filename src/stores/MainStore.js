@@ -99,6 +99,7 @@ export class MainStore {
 
     @action search(query) {
         this.searchLoading = true;
+        if(window.innerWidth <= 680 && this.showInfoWindow) this.toggleInfowindow();
         if(!query.length) {
             this.restaurantsSearchResults = this.restaurants
         } else {
@@ -216,8 +217,9 @@ export class MainStore {
                     }
                 }).sort((a, b) => b.violations.length - a.violations.length);
                 this.loading = false;
+
                 const closedByInspection = this.restaurants.filter(r => r.inspection_closed_business);
-                console.log(closedByInspection)
+
             }).catch(ex => this.handleErrors(ex))
     }
 

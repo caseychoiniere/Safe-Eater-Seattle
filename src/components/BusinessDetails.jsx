@@ -51,10 +51,6 @@ class BusinessDetails extends Component {
                     <Place style={style.icon} onClick={() => this.setState({showHours: !this.state.showHours})}/>
                     {selectedRestaurant.address}
                 </h4>
-                {/*<h3 style={style.heading}>Hours</h3>*/}
-                {/*<ul>*/}
-                    {/*{h}*/}
-                {/*</ul>*/}
                 { hours.length ? <div style={{padding: '14px 14px 70px 14px'}}>
                     <Table>
                         <TableHeader displaySelectAll={false} adjustForCheckbox={false}>
