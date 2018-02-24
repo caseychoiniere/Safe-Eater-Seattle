@@ -10,34 +10,6 @@ body {
   padding: 84px 0 20px 0;
 }
 
-.hours h3 {
-  text-align: left;
-}
-
-.hours dt {
-  font-weight: bold
-}
-.hours dt,
-.hours dd {
-  display: inline-block;
-  margin-bottom: 1em;
-}
-
-.hours-day-label {
-  width: 40%;
-  float: left;
-  text-align: left;
-}
-
-.hours-day {
-  width: 60%;
-  margin-left: 0;
-  float: right;
-  text-align: left;
-}
-
-.hours {
-  width: 480px;
+.recharts-wrapper {
   margin: 0 auto;
-  padding-left: 20px;
 }

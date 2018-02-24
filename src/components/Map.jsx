@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import { observer } from 'mobx-react';
+import { Col } from 'react-grid-system';
 import { GoogleMap, Marker, withGoogleMap } from 'react-google-maps';
 import Drawer from 'material-ui/Drawer';
 import IconButton from 'material-ui/IconButton';
@@ -44,22 +45,24 @@ class Map extends Component {
                        </IconButton>
                        <h3 style={style.mapTitle}>{selectedRestaurant.name}</h3>
                        <Graph />
-                       <GoogleMapsWrapper
-                           googleMapURL='https://maps.googleapis.com/maps/api/js?key=AIzaSyAzluYW2z_7GUyngCj_UyUJHROLYPfcsWc&v=3.exp&libraries=geometry,drawing,places'
-                           loadingElement={<div style={{height: '60%'}}/>}
-                           containerElement={<div style={{height: 280, margin: '20px 0px 20px 0px'}}/>}
-                           mapElement={<div style={{height: '100%'}}/>}
-                           defaultZoom={14}
-                           center={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
-                           options={{disableDoubleClickZoom: true}}>
-                           { selectedRestaurant && selectedRestaurant.lat ?
-                               <Marker
-                                   key={selectedRestaurant.id}
-                                   id={selectedRestaurant.id}
-                                   position={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
-                               /> : null
-                           }
-                       </GoogleMapsWrapper>
+                       <Col md={12}>
+                           <GoogleMapsWrapper
+                               googleMapURL='https://maps.googleapis.com/maps/api/js?key=AIzaSyAzluYW2z_7GUyngCj_UyUJHROLYPfcsWc&v=3.exp&libraries=geometry,drawing,places'
+                               loadingElement={<div style={{height: '60%'}}/>}
+                               containerElement={<div style={{height: 280, margin: '20px 10px'}}/>}
+                               mapElement={<div style={{height: '100%'}}/>}
+                               defaultZoom={14}
+                               center={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
+                               options={{disableDoubleClickZoom: true}}>
+                               { selectedRestaurant && selectedRestaurant.lat ?
+                                   <Marker
+                                       key={selectedRestaurant.id}
+                                       id={selectedRestaurant.id}
+                                       position={{lat: selectedRestaurant.lat, lng: selectedRestaurant.lng}}
+                                   /> : null
+                               }
+                           </GoogleMapsWrapper>
+                       </Col>
                        <BusinessDetails />
            </Drawer>
         )

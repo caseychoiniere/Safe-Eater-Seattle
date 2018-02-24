@@ -6,6 +6,8 @@ import Divider from 'material-ui/Divider';
 import CircularProgress from 'material-ui/CircularProgress';
 import IconButton from 'material-ui/IconButton';
 import ArrowDropDown from 'material-ui/svg-icons/navigation/arrow-drop-down';
+import SentimentVeryDissatisfied from 'material-ui/svg-icons/social/sentiment-very-dissatisfied';
+import SentimentNeutral from 'material-ui/svg-icons/social/sentiment-neutral';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
 import {List, ListItem} from 'material-ui/List';
@@ -17,9 +19,35 @@ class RestaurantList extends Component {
 
     getRestaurantInfo = (restaurant) => {
         const { selectedRestaurant, showInfoWindow} = MainStore;
-        if(selectedRestaurant && selectedRestaurant.id !== restaurant.id || selectedRestaurant === null) MainStore.getRestaurantInfo(restaurant);
+        if(selectedRestaurant && selectedRestaurant.id !== restaurant.id || selectedRestaurant === null) MainStore.getRestaurantData(restaurant);
         MainStore.toggleNestedList(restaurant.id);
-        if(!showInfoWindow) MainStore.toggleInfowindow();
+        if(!showInfoWindow) MainStore.toggleInfowindow(); //Todo: make change to this so that the details view doesn't open again if just closing list item on mobile
+    };
+
+    generateIcon = (violations) => {
+        const style = {
+            button: { width: 36, height: 36, padding: 0, top: 6, left: 0 },
+            icon: { width: 36, height: 36 }
+        };
+        if(violations.some(r => r.violation_type === 'red')) {
+            return <IconButton tooltip='At least one critical violation in the past 12 months'
+                               tooltipPosition='bottom-right'
+                               touch={true}
+                               style={style.button}
+                               iconStyle={style.icon}
+            >
+                <SentimentVeryDissatisfied color={ red200 }/>
+            </IconButton>
+        } else {
+            return <IconButton tooltip='No critical violations in the past 12 months'
+                               tooltipPosition='bottom-right'
+                               touch={true}
+                               style={style.button}
+                               iconStyle={style.icon}
+            >
+                <SentimentNeutral color={ blue200 }/>
+            </IconButton>
+        }
     };
 
     loadMore = (page) => {
@@ -35,18 +63,11 @@ class RestaurantList extends Component {
         MainStore.toggleNestedList(id);
     };
 
-
     render() {
-        const slideContent = () => {
-            let padding;
-            if(!!document.getElementById('mc1') ) padding = document.getElementById('mc1').offsetLeft;
-            return {paddingLeft: window.innerWidth <= 720 ? 0 : padding > 410 ? 410 : 410 - padding};
-        };
-
-        const styles = {
+        const style = {
             loader: {position: 'fixed', top: 0, left: 0, bottom: 0, right: 0, margin: 'auto'},
             nestedListItems: {padding: 0},
-            mainCol: slideContent()
+            smallIcon: {top: 18}
         };
 
         let {
@@ -62,7 +83,7 @@ class RestaurantList extends Component {
         restaurants = restaurantsSearchResults ? restaurantsSearchResults : restaurants;
 
         return (
-                loading ? <CircularProgress size={100} thickness={5} color={greenA700} style={styles.loader}/>
+                loading ? <CircularProgress size={100} thickness={5} color={greenA700} style={style.loader}/>
                         : <Paper zDepth={2}>
                             {
                                 this.paginate(restaurants, 50, pageNumber).map((r) => {
@@ -72,8 +93,8 @@ class RestaurantList extends Component {
                                             <ListItem key={generateUniqueKey()}
                                                       primaryText={r.name}
                                                       secondaryText={`${r.violations.length} ${violationText} since ${formatDate(dateRange)}`}
-                                                      leftIcon={<Warning color={!r.violations.some(r => r.violation_type === 'red') ? blue200 : red200 }/>}
-                                                      nestedListStyle={styles.nestedListItems}
+                                                      leftIcon={this.generateIcon(r.violations)}
+                                                      nestedListStyle={style.nestedListItems}
                                                       onClick={() => this.getRestaurantInfo(r)}
                                                       open={openNestedListItems.has(r.id)}
                                                       rightIconButton={<IconButton onClick={() => this.toggleNestedList(r.id)}><ArrowDropDown/></IconButton>}
@@ -82,7 +103,7 @@ class RestaurantList extends Component {
                                                               return <ListItem
                                                                   key={generateUniqueKey()}
                                                                   disabled={true}
-                                                                  hoverColor={v.violation_type === 'blue' ? blue200 : red200}
+                                                                  leftIcon={<Warning style={style.smallIcon} color={v.violation_type === 'blue' ? blue200 : red200}/>}
                                                                   primaryText={`${v.violation_type.toUpperCase()} - ${v.violation_points} points`}
                                                                   secondaryText={
                                                                       <span>

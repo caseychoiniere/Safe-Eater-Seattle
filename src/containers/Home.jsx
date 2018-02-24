@@ -21,7 +21,7 @@ class Home extends Component {
             return {paddingLeft: window.innerWidth <= 720 ? 0 : padding > 410 ? 410 : 410 - padding};
         };
 
-        const styles = {
+        const style = {
             loader: {position: 'fixed', top: 0, left: 0, bottom: 0, right: 0, margin: 'auto'},
             nestedListItems: {padding: 0},
             mainCol: slideContent()
@@ -29,10 +29,9 @@ class Home extends Component {
 
         let { showInfoWindow } = MainStore;
 
-
         return (
                 <Row>
-                    <Col key={generateUniqueKey()} md={12} style={showInfoWindow ? styles.mainCol : {}}>
+                    <Col key={generateUniqueKey()} md={12} style={showInfoWindow ? style.mainCol : {}}>
                         <Map />
                         <RestaurantList />
                     </Col>
