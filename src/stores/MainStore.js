@@ -12,7 +12,7 @@ export class MainStore {
     @observable graphDataAllTime;
     @observable hours;
     @observable loading;
-    @observable openNav;
+    @observable openModal;
     @observable openNestedListItems;
     @observable mapObj;
     @observable pageNumber;
@@ -39,7 +39,7 @@ export class MainStore {
         this.graphDataAllTime = [];
         this.hours = [];
         this.loading = false;
-        this.openNav = false;
+        this.openModal = observable.map();
         this.openNestedListItems = observable.map();
         this.mapObj = null;
         this.pageNumber = 1;
@@ -214,8 +214,7 @@ export class MainStore {
         this.graphData = this.graphData.map(d => {
             return {date: d.date, violation_points: d.violation_points, average_points_per_visit: this.averagePointsPerInspection}
         });
-
-        fetch(`https://data.kingcounty.gov/resource/gkhn-e8mn.json?$limit=50000&city=SEATTLE&name=${name}`)
+        this.api.getRestaurantData(`$limit=50000&city=SEATTLE&name=${name}`)
             .then(checkStatus).then(response => response.json())
             .then((json) => {
                 if(json.length) {
@@ -276,7 +275,7 @@ export class MainStore {
     @action getPublicHealthInspectionData() {
         this.loading = true;
         if(!this.dateRange) this.dateRange = this.setDateRange(12);
-        fetch('https://data.kingcounty.gov/resource/gkhn-e8mn.json?$limit=50000&city=SEATTLE')
+        this.api.getPublicHealthInspectionData('$limit=50000&city=SEATTLE')
             .then(checkStatus).then(response => response.json())
             .then((json) => {
                 let data = json.filter((j) => {
@@ -292,8 +291,12 @@ export class MainStore {
         this.loading = !this.loading;
     }
 
-    @action toggleNav() {
-        this.openNav = !this.openNav;
+    @action toggleModal(content) {
+        if(this.openModal.has(content)) {
+            this.openModal.delete(content)
+        } else {
+            this.openModal.set(content, true)
+        }
     }
 
     @action handleErrors(error) {

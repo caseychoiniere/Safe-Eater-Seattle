@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import MainStore from '../stores/MainStore';
-import {generateUniqueKey, formatDate} from '../util/utils';
+import { generateUniqueKey, formatDate } from '../util/utils';
 import Divider from 'material-ui/Divider';
 import CircularProgress from 'material-ui/CircularProgress';
 import IconButton from 'material-ui/IconButton';
@@ -10,7 +10,7 @@ import SentimentVeryDissatisfied from 'material-ui/svg-icons/social/sentiment-ve
 import SentimentNeutral from 'material-ui/svg-icons/social/sentiment-neutral';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
-import {List, ListItem} from 'material-ui/List';
+import { List, ListItem } from 'material-ui/List';
 import { blue200, red200, pink900, white, greenA700 } from 'material-ui/styles/colors';
 import Warning from 'material-ui/svg-icons/alert/warning';
 
@@ -19,7 +19,7 @@ class RestaurantList extends Component {
 
     getRestaurantInfo = (restaurant) => {
         const { selectedRestaurant, showInfoWindow} = MainStore;
-        if(selectedRestaurant && selectedRestaurant.id !== restaurant.id || selectedRestaurant === null) MainStore.getRestaurantData(restaurant);
+        if((selectedRestaurant && selectedRestaurant.id !== restaurant.id) || selectedRestaurant === null) MainStore.getRestaurantData(restaurant);
         MainStore.toggleNestedList(restaurant.id);
         if(!showInfoWindow) MainStore.toggleInfowindow(); //Todo: make change to this so that the details view doesn't open again if just closing list item on mobile
     };
