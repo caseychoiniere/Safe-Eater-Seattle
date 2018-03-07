@@ -1,4 +1,5 @@
-Safe Eater Seattle allows people to see public health inspection information about restaurants, bars and other food service establishments in Seattle.
+Eat Safe Seattle allows people to see public health inspection information about restaurants, bars and other food service establishments in Seattle.
+
 The app uses open [King County food establishment inspection data](https://data.kingcounty.gov/Health/Food-Establishment-Inspection-Data/f29f-zza5).
 
 This project uses [Create React App](https://github.com/facebookincubator/create-react-app) in addition to
