@@ -131,7 +131,8 @@ export class MainStore {
 
     @action setDateRange(range) {
         range = range || 12;
-        this.dateRange = moment().subtract(range, 'months').format();
+        // return this.dateRange = moment().subtract(range, 'months').format();
+        return this.dateRange = moment().subtract(range, 'months').toISOString().slice(0,-1);
     }
 
     @action formatData(data) {
@@ -154,22 +155,31 @@ export class MainStore {
                 violations: data.filter((el) => {
                     return el.business_id === j.business_id;
                 }).map((el) => {
-                    let desc = el.violation_description;
-                    while (desc[desc.length-1] === "." || desc[desc.length-1] === ",") {
-                        desc = desc.slice(0,-1);
-                    }
-                    return {
-                        violation_date: moment(el.inspection_date).format('MM/DD/YYYY'),
-                        violation_type: el.violation_type,
-                        violation_description: desc.slice(7),
-                        violation_points: Number(el.violation_points),
+                    if(Number(el.violation_points > 0)) {
+                        let desc = el.violation_description;
+                        while (desc[desc.length - 1] === "." || desc[desc.length - 1] === ",") {
+                            desc = desc.slice(0, -1);
+                        }
+                        return {
+                            violation_date: moment(el.inspection_date).format('MM/DD/YYYY'),
+                            violation_type: el.violation_type,
+                            violation_description: desc.slice(7),
+                            violation_points: Number(el.violation_points),
+                        }
+                    } else {
+                        return {
+                            violation_date: moment(el.inspection_date).format('MM/DD/YYYY'),
+                            violation_type: 'no violations',
+                            violation_description: '',
+                            violation_points: Number(el.violation_points),
+                        }
                     }
                 }).sort((a,b) => new Date(a.violation_date) - new Date(b.violation_date))
             }
         }).sort((a, b) => b.violations.length - a.violations.length);
     }
 
-    @action getRestaurantData(restaurant) {
+    @action getRestaurantData(restaurant) {  //Todo: functions for sorting - DRY it up
         if(!restaurant) restaurant = this.selectedRestaurant;
         this.graphData = [];
         this.graphDataAllTime = [];
@@ -214,14 +224,12 @@ export class MainStore {
         this.graphData = this.graphData.map(d => {
             return {date: d.date, violation_points: d.violation_points, average_points_per_visit: this.averagePointsPerInspection}
         });
+
         this.api.getRestaurantData(`$limit=50000&city=SEATTLE&name=${name}`)
             .then(checkStatus).then(response => response.json())
             .then((json) => {
                 if(json.length) {
-                    let data = json.filter((j) => {
-                        return j.violation_points > 0
-                    }).map((j) => j);
-
+                    let data = this.filterData(json);
                     data = this.formatData(data);
                     this.selectedRestaurantAllTime = data[0];
 
@@ -272,15 +280,37 @@ export class MainStore {
         this.restaurantsSearchResults = null;
     }
 
+    @action filterData(arr) {
+        let r = observable.map();
+        while(arr.length) {
+            arr.forEach((i, index) => {
+                if(!r.has(i.business_id)) {
+                    r.set(i.business_id, [i])
+                } else {
+                    r.set(i.business_id, [...r.get(i.business_id), i])
+                }
+                arr.splice(index, 1);
+            });
+        }
+        let newArr = [];
+        r.values().forEach((v) => {
+            if(v.some(p => Number(p.violation_points) > 0)) {
+                v.forEach((i) => {
+                    newArr.push(i)
+                })
+            }
+        });
+        return newArr;
+    }
+
     @action getPublicHealthInspectionData() {
         this.loading = true;
         if(!this.dateRange) this.dateRange = this.setDateRange(12);
-        this.api.getPublicHealthInspectionData('$limit=50000&city=SEATTLE')
+        const now = moment().toISOString().slice(0,-1);
+        this.api.getPublicHealthInspectionData(`$limit=50000&$where=inspection_date between '${this.dateRange}' and '${now}'&city=SEATTLE`)
             .then(checkStatus).then(response => response.json())
             .then((json) => {
-                let data = json.filter((j) => {
-                    return j.violation_points > 0 && new Date(j.inspection_date) > new Date(this.dateRange)
-                }).map((j) => j);
+                const data = this.filterData(json);
                 this.restaurants = this.formatData(data);
                 this.loading = false;
                 const closedByInspection = this.restaurants.filter(r => r.inspection_closed_business);

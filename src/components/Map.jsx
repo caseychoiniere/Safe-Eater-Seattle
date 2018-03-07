@@ -2,9 +2,11 @@ import React, {Component} from "react";
 import { observer } from 'mobx-react';
 import { Col } from 'react-grid-system';
 import { GoogleMap, Marker, withGoogleMap } from 'react-google-maps';
+import { grey400 } from 'material-ui/styles/colors'
 import Drawer from 'material-ui/Drawer';
 import IconButton from 'material-ui/IconButton';
 import ArrowBack from 'material-ui/svg-icons/navigation/arrow-back';
+import Help from 'material-ui/svg-icons/action/help';
 import MainStore from '../stores/MainStore';
 import Graph from './Graph.jsx';
 import BusinessDetails from './BusinessDetails.jsx';
@@ -21,7 +23,7 @@ const GoogleMapsWrapper = withGoogleMap(props => {
 class Map extends Component {
 
     toggleInfoWindow = () => {
-      MainStore.toggleInfowindow();
+        MainStore.toggleInfowindow();
     };
 
     render() {
@@ -29,13 +31,13 @@ class Map extends Component {
             closeBtn: { float: 'left', margin: '0px 0px 0px 6px' },
             h4: {margin: '10px 14px'},
             mapTitle: { textAlign: 'center', margin: '14px 12%' },
-            icon: { verticalAlign: 'bottom' }
+            helpIcon: {position: 'fixed', top: 0, right: '3%'}
         };
 
         let { showInfoWindow, selectedRestaurant } = MainStore;
 
        return (
-           selectedRestaurant !== null && <Drawer width={window.innerWidth <= 720 ? '100%' : 400}
+           selectedRestaurant !== null && <Drawer width={window.innerWidth <= 720 ? 400 : 400}
                                                   openSecondary={false}
                                                   open={showInfoWindow}
                                                   containerStyle={{marginTop: 64}}>
@@ -43,6 +45,13 @@ class Map extends Component {
                                    onClick={this.toggleInfoWindow}>
                            <ArrowBack />
                        </IconButton>
+               <IconButton style={style.helpIcon}
+                           touch={true}
+                           tooltip={<p>The lower the violation points the better!<br/> Red violations are worse than blue violations.</p>}
+                           tooltipPosition="bottom-left"
+               >
+                   <Help color={grey400} />
+               </IconButton>
                        <h3 style={style.mapTitle}>{selectedRestaurant.name}</h3>
                        <Graph />
                        <Col md={12}>
