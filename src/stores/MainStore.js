@@ -5,20 +5,22 @@ import { checkStatus } from '../util/fetchUtil';
 const google = window.google;
 
 export class MainStore {
-    @observable averagePointsPerInspectionAllTime;
     @observable averagePointsPerInspection;
+    @observable averagePointsPerInspectionAllTime;
     @observable dateRange;
     @observable graphData;
     @observable graphDataAllTime;
     @observable hours;
     @observable loading;
+    @observable mapObj;
     @observable openModal;
     @observable openNestedListItems;
-    @observable mapObj;
     @observable pageNumber;
     @observable paginationLoading;
+    @observable rating;
     @observable restaurants;
     @observable restaurantsSearchResults;
+    @observable reviews;
     @observable searchLoading;
     @observable selectedRestaurant;
     @observable selectedRestaurantAllTime;
@@ -27,11 +29,13 @@ export class MainStore {
     @observable selectedRestaurantViolationTypesAllTime;
     @observable showAllData;
     @observable showInfoWindow;
+    @observable showReviews;
     @observable showSearch;
     @observable violationTypeGraphData;
     @observable violationTypeGraphDataAllTime;
 
     constructor() {
+        this.api = api;
         this.averagePointsPerInspection = 0;
         this.averagePointsPerInspectionAllTime = 0;
         this.dateRange = null;
@@ -39,13 +43,15 @@ export class MainStore {
         this.graphDataAllTime = [];
         this.hours = [];
         this.loading = false;
+        this.mapObj = null;
         this.openModal = observable.map();
         this.openNestedListItems = observable.map();
-        this.mapObj = null;
         this.pageNumber = 1;
         this.paginationLoading = false;
+        this.rating = null;
         this.restaurants = [];
         this.restaurantsSearchResults = null;
+        this.reviews = [];
         this.searchLoading = false;
         this.selectedRestaurant = null;
         this.selectedRestaurantViolations = observable.map();
@@ -53,16 +59,14 @@ export class MainStore {
         this.selectedRestaurantViolationTypesAllTime = observable.map();
         this.showAllData = false;
         this.showInfoWindow = false;
+        this.showReviews = true;
         this.showSearch = false;
         this.violationTypeGraphData = [];
         this.violationTypeGraphDataAllTime = [];
-
-        this.api = api;
     }
 
     @action getMapObject(map) {
         const restaurant = this.selectedRestaurant;
-
         if(map) {
             this.mapObj = map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
             const loc = {lat: restaurant.lat, lng: restaurant.lng};
@@ -93,8 +97,14 @@ export class MainStore {
             nearbySearch()
                 .then(results => findDetail(results[0]))
                 .then(details => {
-                    if (details.opening_hours) this.hours = details.opening_hours.weekday_text;
-                }).catch(e => this.hours = [])
+                    if(details.opening_hours) this.hours = details.opening_hours.weekday_text;
+                    if(details.reviews) this.reviews = details.reviews;
+                    if(details.rating) this.rating = details.rating;
+                }).catch(() => {
+                this.hours = [];
+                this.reviews = [];
+                this.rating = null;
+            })
         }
     }
 
@@ -104,6 +114,14 @@ export class MainStore {
         } else {
             this.openNestedListItems.delete(id)
         }
+    }
+
+    @action toggleReviewList() {
+        this.showReviews = !this.showReviews;
+    }
+
+    @action resetSelectedRestaurant() {
+        this.selectedRestaurant = null;
     }
 
     @action showAllTimeData() {
@@ -131,7 +149,6 @@ export class MainStore {
 
     @action setDateRange(range) {
         range = range || 12;
-        // return this.dateRange = moment().subtract(range, 'months').format();
         return this.dateRange = moment().subtract(range, 'months').toISOString().slice(0,-1);
     }
 
@@ -179,7 +196,33 @@ export class MainStore {
         }).sort((a, b) => b.violations.length - a.violations.length);
     }
 
-    @action getRestaurantData(restaurant) {  //Todo: functions for sorting - DRY it up
+    @action formatViolations(restaurant, violations, violationTypes) {
+        restaurant.violations.forEach((v) => {
+            if(!violations.has(v.violation_date)) {
+                violations.set(v.violation_date, v.violation_points);
+                violationTypes.set(v.violation_date, [v.violation_type]);
+            } else {
+                violations.set(v.violation_date, violations.get(v.violation_date) + v.violation_points);
+                violationTypes.set(v.violation_date, [...violationTypes.get(v.violation_date), v.violation_type]);
+            }
+        });
+    }
+
+    @action formatGraphData(pointsGraph, typeGraph, violations, violationTypes) {
+        violations.forEach((value, key) => {
+            pointsGraph.push({date: key, violation_points: value});
+        });
+
+        violationTypes.forEach((value, key) => {
+            let red = value.filter(v => v === 'red').length;
+            let blue = value.filter(v => v === 'blue').length;
+            typeGraph.push({date: key, red_violations: red, blue_violations: blue})
+        });
+
+        typeGraph = typeGraph.sort((a,b) => new Date(a.date) - new Date(b.date));
+    }
+
+    @action getRestaurantData(restaurant) {
         if(!restaurant) restaurant = this.selectedRestaurant;
         this.graphData = [];
         this.graphDataAllTime = [];
@@ -195,35 +238,13 @@ export class MainStore {
             return "%" + m.charCodeAt(0).toString(16);
         });
 
-        this.selectedRestaurant.violations.forEach((v) => {
-            if(!this.selectedRestaurantViolations.has(v.violation_date)) {
-                this.selectedRestaurantViolations.set(v.violation_date, v.violation_points);
-                this.selectedRestaurantViolationTypes.set(v.violation_date, [v.violation_type]);
-            } else {
-                this.selectedRestaurantViolations.set(v.violation_date, this.selectedRestaurantViolations.get(v.violation_date) + v.violation_points);
-                this.selectedRestaurantViolationTypes.set(v.violation_date, [...this.selectedRestaurantViolationTypes.get(v.violation_date), v.violation_type]);
-            }
-        });
+        this.formatViolations(this.selectedRestaurant, this.selectedRestaurantViolations, this.selectedRestaurantViolationTypes);
 
-        this.selectedRestaurantViolations.forEach((value, key) => {
-            this.graphData.push({date: key, violation_points: value});
-        });
+        this.formatGraphData(this.graphData, this.violationTypeGraphData, this.selectedRestaurantViolations, this.selectedRestaurantViolationTypes);
 
-        this.selectedRestaurantViolationTypes.forEach((value, key) => {
-            let red = value.filter(v => v === 'red').length;
-            let blue = value.filter(v => v === 'blue').length;
-            this.violationTypeGraphData.push({date: key, red_violations: red, blue_violations: blue})
-        });
-
-        this.violationTypeGraphData = this.violationTypeGraphData.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        this.averagePointsPerInspection = this.graphData.map((d) => {
+        this.averagePointsPerInspection = this.graphData.map((d) => { // Todo: figure out why this isn't working in a separate function
                 return d.violation_points;
         }).reduce(( p, c ) => p + c, 0 ) / this.graphData.length;
-
-        this.graphData = this.graphData.map(d => {
-            return {date: d.date, violation_points: d.violation_points, average_points_per_visit: this.averagePointsPerInspection}
-        });
 
         this.api.getRestaurantData(`$limit=50000&city=SEATTLE&name=${name}`)
             .then(checkStatus).then(response => response.json())
@@ -233,36 +254,13 @@ export class MainStore {
                     data = this.formatData(data);
                     this.selectedRestaurantAllTime = data[0];
 
-                    this.selectedRestaurantAllTime.violations.forEach((v) => {
-                        if (!this.selectedRestaurantViolationsAllTime.has(v.violation_date)) {
-                            this.selectedRestaurantViolationsAllTime.set(v.violation_date, v.violation_points);
-                            this.selectedRestaurantViolationTypesAllTime.set(v.violation_date, [v.violation_type]);
+                    this.formatViolations(this.selectedRestaurantAllTime, this.selectedRestaurantViolationsAllTime, this.selectedRestaurantViolationTypesAllTime);
 
-                        } else {
-                            this.selectedRestaurantViolationsAllTime.set(v.violation_date, this.selectedRestaurantViolationsAllTime.get(v.violation_date) + v.violation_points);
-                            this.selectedRestaurantViolationTypesAllTime.set(v.violation_date, [...this.selectedRestaurantViolationTypesAllTime.get(v.violation_date), v.violation_type]);
-                        }
-                    });
+                    this.formatGraphData(this.graphDataAllTime, this.violationTypeGraphDataAllTime, this.selectedRestaurantViolationsAllTime, this.selectedRestaurantViolationTypesAllTime);
 
-                    this.selectedRestaurantViolationsAllTime.forEach((value, key) => {
-                        this.graphDataAllTime.push({date: key, violation_points: value});
-                    });
-
-                    this.selectedRestaurantViolationTypesAllTime.forEach((value, key) => {
-                        let red = value.filter(v => v === 'red').length;
-                        let blue = value.filter(v => v === 'blue').length;
-                        this.violationTypeGraphDataAllTime.push({date: key, red_violations: red, blue_violations: blue});
-                    });
-
-                    this.violationTypeGraphDataAllTime = this.violationTypeGraphDataAllTime.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-                    this.averagePointsPerInspectionAllTime = this.graphDataAllTime.map((d) => {
+                    this.averagePointsPerInspectionAllTime = this.graphDataAllTime.map((d) => { // Todo: figure out why this isn't working in a separate function
                         return d.violation_points;
                     }).reduce((p, c) => p + c, 0) / this.graphDataAllTime.length;
-
-                    this.graphDataAllTime = this.graphDataAllTime.map(d => {
-                        return {date: d.date, violation_points: d.violation_points, average_points_per_visit: this.averagePointsPerInspectionAllTime}
-                    });
                 }
             }).catch(ex => this.handleErrors(ex))
     }
@@ -313,7 +311,7 @@ export class MainStore {
                 const data = this.filterData(json);
                 this.restaurants = this.formatData(data);
                 this.loading = false;
-                const closedByInspection = this.restaurants.filter(r => r.inspection_closed_business);
+                const closedByInspection = this.restaurants.filter(r => r.inspection_closed_business); // Todo: remove this if not used
             }).catch(ex => this.handleErrors(ex))
     }
 

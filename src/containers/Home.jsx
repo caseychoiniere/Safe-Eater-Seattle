@@ -3,7 +3,7 @@ import { observer } from 'mobx-react';
 import { Col, Row } from 'react-grid-system';
 import MainStore from '../stores/MainStore';
 import Modal from '../components/Modal.jsx';
-import Map from '../components/Map.jsx';
+import LeftDrawer from '../components/LeftDrawer.jsx';
 import RestaurantList from '../components/RestaurantList.jsx'
 import { generateUniqueKey } from '../util/utils';
 
@@ -30,7 +30,7 @@ class Home extends Component {
         return (
                 <Row>
                     <Col key={generateUniqueKey()} md={12} style={showInfoWindow ? style.mainCol : {}}>
-                        <Map />
+                        <LeftDrawer />
                         <RestaurantList />
                         <Modal />
                     </Col>

@@ -16,16 +16,13 @@ import SentimentNeutral from 'material-ui/svg-icons/social/sentiment-neutral';
 import ThumbUp from 'material-ui/svg-icons/action/thumb-up';
 import Warning from 'material-ui/svg-icons/alert/warning';
 
-
-
 @observer
 class RestaurantList extends Component {
 
     getRestaurantInfo = (restaurant) => {
         const { selectedRestaurant, showInfoWindow} = MainStore;
         if((selectedRestaurant && selectedRestaurant.id !== restaurant.id) || selectedRestaurant === null) MainStore.getRestaurantData(restaurant);
-        // MainStore.toggleNestedList(restaurant.id);
-        if(!showInfoWindow) MainStore.toggleInfowindow(); //Todo: make change to this so that the details view doesn't open again if just closing list item on mobile
+        if(!showInfoWindow) MainStore.toggleInfowindow();
     };
 
     generateIcon = (violations, nestedIcon, nestedViolation) => {
@@ -34,6 +31,7 @@ class RestaurantList extends Component {
             icon: { width: 36, height: 36 },
             smallIcon: {top: 18}
         };
+
         if(!nestedIcon) {
             if (violations.some(r => r.violation_type === 'red')) {
                 return <IconButton tooltip='At least one critical violation in the past 12 months'
@@ -117,7 +115,7 @@ class RestaurantList extends Component {
                                                               {openNestedListItems.has(r.id) ? <ArrowDropUp/> : <ArrowDropDown/>}
                                                           </IconButton>
                                                       }
-                                                      nestedItems={
+                                                      nestedItems={ openNestedListItems.has(r.id) ?
                                                           r.violations.length > 0 && r.violations.map((v) => {
                                                               return <ListItem
                                                                   key={generateUniqueKey()}
@@ -135,7 +133,7 @@ class RestaurantList extends Component {
                                                                   }
                                                                   secondaryTextLines={2}
                                                               />
-                                                          })
+                                                          }) : []
                                                       }
                                             />
                                             <Divider/>
