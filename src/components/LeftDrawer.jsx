@@ -10,8 +10,6 @@ import Drawer from 'material-ui/Drawer';
 import Help from 'material-ui/svg-icons/action/help';
 import IconButton from 'material-ui/IconButton';
 
-import {FacebookShareButton, FacebookIcon} from 'react-share';
-
 @observer
 class LeftDrawer extends Component {
 
@@ -48,12 +46,6 @@ class LeftDrawer extends Component {
                 </IconButton>
                 <h3 style={style.mapTitle}>{selectedRestaurant.name}</h3>
                 <Graph />
-                <FacebookShareButton
-                    url={'http://eatsafeseattle.com'}
-                    quote={'Eat Safe Seattle'}
-                >
-                    <FacebookIcon size={32} round />
-                </FacebookShareButton>
                 <Map />
                 <BusinessDetails />
             </Drawer>
