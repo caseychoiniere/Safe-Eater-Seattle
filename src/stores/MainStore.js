@@ -31,6 +31,7 @@ export class MainStore {
     @observable showInfoWindow;
     @observable showReviews;
     @observable showSearch;
+    @observable showSharingIcons;
     @observable violationTypeGraphData;
     @observable violationTypeGraphDataAllTime;
 
@@ -61,6 +62,7 @@ export class MainStore {
         this.showInfoWindow = false;
         this.showReviews = true;
         this.showSearch = false;
+        this.showSharingIcons = false;
         this.violationTypeGraphData = [];
         this.violationTypeGraphDataAllTime = [];
     }
@@ -118,6 +120,10 @@ export class MainStore {
 
     @action toggleReviewList() {
         this.showReviews = !this.showReviews;
+    }
+
+    @action toggleSharing() {
+        this.showSharingIcons = !this.showSharingIcons;
     }
 
     @action resetSelectedRestaurant() {
