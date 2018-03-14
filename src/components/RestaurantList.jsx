@@ -2,17 +2,19 @@ import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import MainStore from '../stores/MainStore';
 import { generateUniqueKey, formatDate } from '../util/utils';
-import { blue200, grey300, red200, pink900, white, green200, greenA700 } from 'material-ui/styles/colors';
+import { blue300, grey300, orange300, red300, red500, pink900, white, green300, greenA700 } from 'material-ui/styles/colors';
 import ArrowDropDown from 'material-ui/svg-icons/navigation/arrow-drop-down';
 import ArrowDropUp from 'material-ui/svg-icons/navigation/arrow-drop-up';
 import CircularProgress from 'material-ui/CircularProgress';
 import Divider from 'material-ui/Divider';
 import IconButton from 'material-ui/IconButton';
 import { List, ListItem } from 'material-ui/List';
+import Mood from 'material-ui/svg-icons/social/mood';
 import MoodBad from 'material-ui/svg-icons/social/mood-bad';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
 import SentimentNeutral from 'material-ui/svg-icons/social/sentiment-neutral';
+import SentimentSatisfied from 'material-ui/svg-icons/social/sentiment-satisfied';
 import ThumbUp from 'material-ui/svg-icons/action/thumb-up';
 import Warning from 'material-ui/svg-icons/alert/warning';
 
@@ -25,38 +27,70 @@ class RestaurantList extends Component {
         if(!showInfoWindow) MainStore.toggleInfowindow();
     };
 
-    generateIcon = (violations, nestedIcon, nestedViolation) => {
+    generateIcon = (violations, closed, nestedIcon, nestedViolation) => {
         const style = {
             button: { width: 36, height: 36, padding: 0, top: 6, left: 0 },
             icon: { width: 36, height: 36 },
             smallIcon: {top: 18}
         };
+        let points = violations.reduce((a,b) => { return a + b.violation_points} ,0);
 
         if(!nestedIcon) {
-            if (violations.some(r => r.violation_type === 'red')) {
-                return <IconButton tooltip='At least one critical violation in the past 12 months'
+            if(closed) {
+                return <IconButton tooltip='This establishment was closed at least once in the past 12 months due to poor inspection results'
                                    tooltipPosition='bottom-right'
                                    touch={true}
                                    style={style.button}
                                    iconStyle={style.icon}
                 >
-                    <MoodBad color={ red200 }/>
+                    <Warning color={ red500 }/>
                 </IconButton>
-            } else {
-                return <IconButton tooltip='No critical violations in the past 12 months'
+            }
+            if(!closed && points >= 85) {
+                return <IconButton tooltip='85 or more violation points in the past 12 months'
                                    tooltipPosition='bottom-right'
                                    touch={true}
                                    style={style.button}
                                    iconStyle={style.icon}
                 >
-                    <SentimentNeutral color={ blue200 }/>
+                    <MoodBad color={ red300 }/>
+                </IconButton>
+            }
+            if(!closed && points < 85 && points >= 65) {
+                return <IconButton tooltip='Between 85 and 65 violation points in the past 12 months'
+                                   tooltipPosition='bottom-right'
+                                   touch={true}
+                                   style={style.button}
+                                   iconStyle={style.icon}
+                >
+                    <SentimentNeutral color={ orange300 }/>
+                </IconButton>
+            }
+            if(!closed && points < 65 && points >= 45) {
+                return <IconButton tooltip='Between 65 and 45 violation points in the past 12 months'
+                                   tooltipPosition='bottom-right'
+                                   touch={true}
+                                   style={style.button}
+                                   iconStyle={style.icon}
+                >
+                    <SentimentSatisfied color={ blue300 }/>
+                </IconButton>
+            }
+            if(!closed && points < 45) {
+                return <IconButton tooltip='Less than 45 violation points in the past 12 months'
+                            tooltipPosition='bottom-right'
+                            touch={true}
+                            style={style.button}
+                            iconStyle={style.icon}
+                >
+                    <Mood style={style.smallIcon} color={green300}/>
                 </IconButton>
             }
         } else {
             if(nestedViolation !== 'no violations') {
-                return <Warning style={style.smallIcon} color={nestedViolation === 'blue' ? blue200 : red200}/>
+                return <Warning style={style.smallIcon} color={nestedViolation === 'blue' ? blue300 : red300}/>
             } else {
-                return <ThumbUp style={style.smallIcon} color={green200}/>
+                return <ThumbUp style={style.smallIcon} color={green300}/>
             }
         }
     };
@@ -98,7 +132,7 @@ class RestaurantList extends Component {
                 loading ? <CircularProgress size={100} thickness={5} color={greenA700} style={style.loader}/>
                         : <Paper zDepth={2}>
                             {
-                                this.paginate(restaurants, 25, pageNumber).map((r) => {
+                                this.paginate(restaurants, 50, pageNumber).map((r) => {
                                     let violationText = r.violations.length > 1 ? 'violations' : 'violation';
                                     return (
                                         <List key={generateUniqueKey()} style={{padding: 0}}>
@@ -106,7 +140,7 @@ class RestaurantList extends Component {
                                                       style={selectedRestaurant && selectedRestaurant.id === r.id ? {backgroundColor: grey300} : {}}
                                                       primaryText={r.name}
                                                       secondaryText={`${r.violations.length} ${violationText} since ${formatDate(dateRange)}`}
-                                                      leftIcon={this.generateIcon(r.violations, false, null)}
+                                                      leftIcon={this.generateIcon(r.violations, r.inspection_closed_business, false, null)}
                                                       nestedListStyle={style.nestedListItems}
                                                       onClick={() => this.getRestaurantInfo(r)}
                                                       open={openNestedListItems.has(r.id)}
@@ -120,7 +154,7 @@ class RestaurantList extends Component {
                                                               return <ListItem
                                                                   key={generateUniqueKey()}
                                                                   disabled={true}
-                                                                  leftIcon={this.generateIcon(r.violations, true, v.violation_type)}
+                                                                  leftIcon={this.generateIcon(r.violations, false, true, v.violation_type)}
                                                                   primaryText={`${v.violation_type.toUpperCase()} - ${v.violation_points} points`}
                                                                   secondaryText={
                                                                       <span>
@@ -141,7 +175,7 @@ class RestaurantList extends Component {
                                     )
                                 })
                             }
-                    { restaurants.length > 250 &&
+                    { restaurants.length > 50 &&
                         <RaisedButton
                             backgroundColor={pink900}
                             label={paginationLoading ? "Loading..." : "Load More"}

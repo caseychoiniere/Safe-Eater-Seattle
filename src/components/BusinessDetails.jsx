@@ -29,7 +29,7 @@ class BusinessDetails extends Component {
             heading: {margin: '8px', fontWeight: 100},
             mapTitle: { textAlign: 'center', margin: '14px 12%' },
             icon: { verticalAlign: 'bottom' },
-            reviewButton: { marginLeft: 30 },
+            reviewButton: { marginLeft: 16 },
             reviewCard: { padding: 14, margin: '0px 0px 14px 0px' },
             reviewImage: { float: 'left', padding: '10px 10px 10px 0px', maxWidth: 60 },
             reviewText: { fontSize: '.8em' },
@@ -37,7 +37,7 @@ class BusinessDetails extends Component {
             stars: { verticalAlign: 'bottom', marginLeft: -4 },
             tableHeaderColumn: { fontSize: 16, color: 'black', paddingLeft: 4, paddingRight: 0 },
             tableRowColumn: { paddingLeft: 4 },
-            tableWrapper: { padding: '0px 10px 10px' },
+            tableWrapper: { padding: '0px 10px 10px', overflow: 'none' },
             tick: { fontSize: 12 }
         };
 
@@ -47,7 +47,7 @@ class BusinessDetails extends Component {
             return reviews.map((r)=> {
                 const stars = [...Array(r.rating)].map(n => <Star color={amber400} key={generateUniqueKey()} style={style.stars}/>);
                 return <Paper key={r.author_url} style={style.reviewCard} zDepth={1}>
-                    <img src={r.profile_photo_url} style={style.reviewImage}/>
+                    <img src={r.profile_photo_url} alt='reviewer avatar' style={style.reviewImage}/>
                     <p>{stars}</p>
                     <p style={style.reviewTime}>{`Review by ${r.author_name} ${r.relative_time_description}`}</p>
                     <p style={style.reviewText}>{r.text}</p>

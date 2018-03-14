@@ -11,7 +11,7 @@ import { generateUniqueKey } from '../util/utils';
 class Home extends Component {
 
     componentDidMount() {
-        MainStore.getPublicHealthInspectionData();
+        MainStore.getRestaurantListData(false, null); //params: isSearch (bool), searchQuery (text)
     }
 
     render() {

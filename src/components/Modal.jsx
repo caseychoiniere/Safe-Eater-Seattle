@@ -77,9 +77,11 @@ class Modal extends Component {
         </span>;
 
         const about = <span>
-                       <p>Eat Safe Seattle started as an initiative to build something meaningful from open data available at King Counties open data portal.</p>
-                    <p>The app only displays restaurants that have received at least one violation during any inspection in the previous 12 months. We do our best to report the facts based on the data available.</p>
-                    <p>We use the latest food establishment inspection data available from King County. You can see the dataset <a href="https://data.kingcounty.gov/Health/Food-Establishment-Inspection-Data/f29f-zza5" target="_blank" rel="noopener noreferrer">HERE</a></p>
+                    <p>Eat Safe Seattle started as an initiative to build something meaningful from open data available at King Counties open data portal.</p>
+                    <p>Eat Safe Seattle is not affiliated with King County or the Seattle government in any way.</p>
+                    <p>The information we share here does not follow or express the opinions of any government agencies.</p>
+                    <p>The app only displays restaurants that have received at least one violation during any inspection in the previous 12 months. We do our best to report the facts based data available.</p>
+                    <p>We use the latest food establishment inspection data from King County. You can see the dataset <a href="https://data.kingcounty.gov/Health/Food-Establishment-Inspection-Data/f29f-zza5" target="_blank" rel="noopener noreferrer">HERE</a></p>
                     <p>Just because a restaurant has received some violations doesn't mean that it's unsafe to eat at. Use this app as a tool to help yourself make good choices based on your own risk tolerance level.</p>
 
                     <h4>Inspection Violations and Points</h4>

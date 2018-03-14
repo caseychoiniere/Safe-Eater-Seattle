@@ -67,95 +67,27 @@ export class MainStore {
         this.violationTypeGraphDataAllTime = [];
     }
 
-    @action getMapObject(map) {
-        const restaurant = this.selectedRestaurant;
-        if(map) {
-            this.mapObj = map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-            const loc = {lat: restaurant.lat, lng: restaurant.lng};
-            const _map = this.mapObj;
-            const service = new google.maps.places.PlacesService(_map);
-
-            const nearbySearch = () => {
-                const request = {
-                    location: loc,
-                    radius: 1000,
-                    keyword: restaurant.name
-                };
-                return new Promise((resolve, reject) => {
-                    service.nearbySearch(request, (results, status) => {
-                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(results) : reject(status);
-                    });
-                });
-            };
-
-            const findDetail = (place) => {
-                return new Promise((resolve, reject) => {
-                    service.getDetails({placeId: place.place_id}, (place, status) => {
-                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(place) : reject(status);
-                    });
-                });
-            };
-
-            nearbySearch()
-                .then(results => findDetail(results[0]))
-                .then(details => {
-                    if(details.opening_hours) this.hours = details.opening_hours.weekday_text;
-                    if(details.reviews) this.reviews = details.reviews;
-                    if(details.rating) this.rating = details.rating;
-                }).catch(() => {
-                this.hours = [];
-                this.reviews = [];
-                this.rating = null;
-            })
-        }
-    }
-
-    @action toggleNestedList(id) {
-        if(!this.openNestedListItems.has(id)) {
-            this.openNestedListItems.set(id, true)
-        } else {
-            this.openNestedListItems.delete(id)
-        }
-    }
-
-    @action toggleReviewList() {
-        this.showReviews = !this.showReviews;
-    }
-
-    @action toggleSharing() {
-        this.showSharingIcons = !this.showSharingIcons;
-    }
-
-    @action resetSelectedRestaurant() {
-        this.selectedRestaurant = null;
-    }
-
-    @action showAllTimeData() {
-        this.showAllData = !this.showAllData;
-    }
-
-    @action setPaginationPageNumber(page) {
-        this.paginationLoading = true;
-        this.pageNumber = page+1;
-        setTimeout(() => this.paginationLoading = false, 2000)
-    }
-
-    @action search(query) {
-        this.searchLoading = true;
-        if(window.innerWidth <= 680 && this.showInfoWindow) this.toggleInfowindow();
-        if(!query.length) {
-            this.restaurantsSearchResults = this.restaurants
-        } else {
-            this.restaurantsSearchResults = this.restaurants.filter((r) => {
-                return r.name.toLowerCase().includes(query.toLowerCase())
+    @action filterData(arr) {
+        let r = observable.map();
+        while(arr.length) {
+            arr.forEach((i, index) => {
+                if(!r.has(i.business_id)) {
+                    r.set(i.business_id, [i])
+                } else {
+                    r.set(i.business_id, [...r.get(i.business_id), i])
+                }
+                arr.splice(index, 1);
             });
         }
-        setTimeout(() => this.searchLoading = false, 1000)
-    }
-
-    @action setDateRange(range) {
-        range = range || 12;
-        return this.dateRange = moment().subtract(range, 'months').toISOString().slice(0,-1);
+        let newArr = [];
+        r.values().forEach((v) => {
+            if(v.some(p => Number(p.violation_points) > 0)) {
+                v.forEach((i) => {
+                    newArr.push(i)
+                })
+            }
+        });
+        return newArr;
     }
 
     @action formatData(data) {
@@ -202,18 +134,6 @@ export class MainStore {
         }).sort((a, b) => b.violations.length - a.violations.length);
     }
 
-    @action formatViolations(restaurant, violations, violationTypes) {
-        restaurant.violations.forEach((v) => {
-            if(!violations.has(v.violation_date)) {
-                violations.set(v.violation_date, v.violation_points);
-                violationTypes.set(v.violation_date, [v.violation_type]);
-            } else {
-                violations.set(v.violation_date, violations.get(v.violation_date) + v.violation_points);
-                violationTypes.set(v.violation_date, [...violationTypes.get(v.violation_date), v.violation_type]);
-            }
-        });
-    }
-
     @action formatGraphData(pointsGraph, typeGraph, violations, violationTypes) {
         violations.forEach((value, key) => {
             pointsGraph.push({date: key, violation_points: value});
@@ -226,6 +146,77 @@ export class MainStore {
         });
 
         typeGraph = typeGraph.sort((a,b) => new Date(a.date) - new Date(b.date));
+    }
+
+    @action formatViolations(restaurant, violations, violationTypes) {
+        restaurant.violations.forEach((v) => {
+            if(!violations.has(v.violation_date)) {
+                violations.set(v.violation_date, v.violation_points);
+                violationTypes.set(v.violation_date, [v.violation_type]);
+            } else {
+                violations.set(v.violation_date, violations.get(v.violation_date) + v.violation_points);
+                violationTypes.set(v.violation_date, [...violationTypes.get(v.violation_date), v.violation_type]);
+            }
+        });
+    }
+
+    @action getRestaurantListData(isSearch, searchQuery) {
+        const limit = !isSearch ? 2000 : 10000;
+        const query = !isSearch ? '' : `$q=${searchQuery}&`;
+        this.loading= true;
+        if(!this.dateRange) this.dateRange = this.setDateRange(12);
+        const now = moment().toISOString().slice(0,-1);
+        this.api.getRestaurantListData(`${query}$limit=${limit}&$where=inspection_date between '${this.dateRange}' and '${now}'&city=SEATTLE`)
+            .then(checkStatus).then(response => response.json())
+            .then((json) => {
+                const data = this.filterData(json);
+                if(!isSearch) this.restaurants = this.formatData(data);
+                if(isSearch) this.restaurantsSearchResults = this.formatData(data);
+                this.loading = false;
+            }).catch(ex => this.handleErrors(ex))
+    }
+
+    @action getMapObject(map) {
+        const restaurant = this.selectedRestaurant;
+        if(map) {
+            this.mapObj = map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+            const loc = {lat: restaurant.lat, lng: restaurant.lng};
+            const _map = this.mapObj;
+            const service = new google.maps.places.PlacesService(_map);
+
+            const nearbySearch = () => {
+                const request = {
+                    location: loc,
+                    radius: 1000,
+                    keyword: restaurant.name
+                };
+                return new Promise((resolve, reject) => {
+                    service.nearbySearch(request, (results, status) => {
+                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(results) : reject(status);
+                    });
+                });
+            };
+
+            const findDetail = (place) => {
+                return new Promise((resolve, reject) => {
+                    service.getDetails({placeId: place.place_id}, (place, status) => {
+                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(place) : reject(status);
+                    });
+                });
+            };
+
+            nearbySearch()
+                .then(results => findDetail(results[0]))
+                .then(details => {
+                    if(details.opening_hours) this.hours = details.opening_hours.weekday_text;
+                    if(details.reviews) this.reviews = details.reviews;
+                    if(details.rating) this.rating = details.rating;
+                }).catch(() => {
+                this.hours = [];
+                this.reviews = [];
+                this.rating = null;
+            })
+        }
     }
 
     @action getRestaurantData(restaurant) {
@@ -248,9 +239,9 @@ export class MainStore {
 
         this.formatGraphData(this.graphData, this.violationTypeGraphData, this.selectedRestaurantViolations, this.selectedRestaurantViolationTypes);
 
-        this.averagePointsPerInspection = this.graphData.map((d) => { // Todo: figure out why this isn't working in a separate function
+        this.averagePointsPerInspection = this.graphData.map((d) => {
                 return d.violation_points;
-        }).reduce(( p, c ) => p + c, 0 ) / this.graphData.length;
+            }).reduce(( p, c ) => p + c, 0 ) / this.graphData.length;
 
         this.api.getRestaurantData(`$limit=50000&city=SEATTLE&name=${name}`)
             .then(checkStatus).then(response => response.json())
@@ -264,61 +255,49 @@ export class MainStore {
 
                     this.formatGraphData(this.graphDataAllTime, this.violationTypeGraphDataAllTime, this.selectedRestaurantViolationsAllTime, this.selectedRestaurantViolationTypesAllTime);
 
-                    this.averagePointsPerInspectionAllTime = this.graphDataAllTime.map((d) => { // Todo: figure out why this isn't working in a separate function
-                        return d.violation_points;
-                    }).reduce((p, c) => p + c, 0) / this.graphDataAllTime.length;
+                    this.averagePointsPerInspectionAllTime = this.graphDataAllTime.map((d) => {
+                            return d.violation_points;
+                        }).reduce((p, c) => p + c, 0) / this.graphDataAllTime.length;
                 }
             }).catch(ex => this.handleErrors(ex))
-    }
-
-
-    @action toggleInfowindow() {
-        this.showInfoWindow = !this.showInfoWindow;
-    }
-
-    @action toggleSearch() {
-        this.showSearch = !this.showSearch;
     }
 
     @action resetSearchResults() {
         this.restaurantsSearchResults = null;
     }
 
-    @action filterData(arr) {
-        let r = observable.map();
-        while(arr.length) {
-            arr.forEach((i, index) => {
-                if(!r.has(i.business_id)) {
-                    r.set(i.business_id, [i])
-                } else {
-                    r.set(i.business_id, [...r.get(i.business_id), i])
-                }
-                arr.splice(index, 1);
-            });
-        }
-        let newArr = [];
-        r.values().forEach((v) => {
-            if(v.some(p => Number(p.violation_points) > 0)) {
-                v.forEach((i) => {
-                    newArr.push(i)
-                })
-            }
-        });
-        return newArr;
+    @action resetSelectedRestaurant() {
+        this.selectedRestaurant = null;
     }
 
-    @action getPublicHealthInspectionData() {
-        this.loading = true;
-        if(!this.dateRange) this.dateRange = this.setDateRange(12);
-        const now = moment().toISOString().slice(0,-1);
-        this.api.getPublicHealthInspectionData(`$limit=50000&$where=inspection_date between '${this.dateRange}' and '${now}'&city=SEATTLE`)
-            .then(checkStatus).then(response => response.json())
-            .then((json) => {
-                const data = this.filterData(json);
-                this.restaurants = this.formatData(data);
-                this.loading = false;
-                const closedByInspection = this.restaurants.filter(r => r.inspection_closed_business); // Todo: remove this if not used
-            }).catch(ex => this.handleErrors(ex))
+    @action search(query) {
+        this.searchLoading = true;
+        if(window.innerWidth <= 680 && this.showInfoWindow) this.toggleInfowindow();
+        if(!query.length) {
+            this.restaurantsSearchResults = this.restaurants
+        } else {
+            this.getRestaurantListData(true, query);
+        }
+        setTimeout(() => this.searchLoading = false, 1000)
+    }
+
+    @action setDateRange(range) {
+        range = range || 12;
+        return this.dateRange = moment().subtract(range, 'months').toISOString().slice(0,-1);
+    }
+
+    @action setPaginationPageNumber(page) {
+        this.paginationLoading = true;
+        this.pageNumber = page+1;
+        setTimeout(() => this.paginationLoading = false, 2000)
+    }
+
+    @action showAllTimeData() {
+        this.showAllData = !this.showAllData;
+    }
+
+    @action toggleInfowindow() {
+        this.showInfoWindow = !this.showInfoWindow;
     }
 
     @action toggleLoading() {
@@ -331,6 +310,26 @@ export class MainStore {
         } else {
             this.openModal.set(content, true)
         }
+    }
+
+    @action toggleNestedList(id) {
+        if(!this.openNestedListItems.has(id)) {
+            this.openNestedListItems.set(id, true)
+        } else {
+            this.openNestedListItems.delete(id)
+        }
+    }
+
+    @action toggleReviewList() {
+        this.showReviews = !this.showReviews;
+    }
+
+    @action toggleSearch() {
+        this.showSearch = !this.showSearch;
+    }
+
+    @action toggleSharing() {
+        this.showSharingIcons = !this.showSharingIcons;
     }
 
     @action handleErrors(error) {
