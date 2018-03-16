@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
-import MainStore from '../stores/MainStore'
+import MainStore from '../stores/MainStore';
+import logo from '../images/logo.png';
 import SearchBar from './SearchBar.jsx'
 import SocialSharing from './SocialSharing.jsx'
 import { green700 } from 'material-ui/styles/colors';
@@ -36,14 +37,20 @@ class Header extends Component {
     render() {
         const { showSearch } = MainStore;
         const style = {
-            appBar: {position: 'fixed', backgroundColor: green700}
+            appBar: {position: 'fixed', backgroundColor: green700},
+            logo: {maxWidth: 64, position: 'absolute', top: 10, left: 60}
         };
 
         return (
             showSearch ? <SearchBar /> :
                 <div>
                     <AppBar
-                        iconElementLeft={<IconButton><Search onClick={this.toggleSearch}/></IconButton>}
+                        iconElementLeft={<span>
+                            <IconButton>
+                                <Search onClick={this.toggleSearch} color={'#fff'}/>
+                            </IconButton>
+                            <img src={logo} alt="lemon" style={style.logo}/>
+                        </span>}
                         iconElementRight={<span>
                                             <SocialSharing />
                                             {this.iconMenu()}
