@@ -10,9 +10,9 @@ Mobx was added without ejecting the app via the [Custom React Scripts](https://w
 
 ## Get Started
 
-1.) `$ git clone https://github.com/caseychoiniere/mobx-cra-starter.git`
+1.) `$ git clone https://github.com/caseychoiniere/Safe-Eater-Seattle.git`
 
-2.) `$ cd MyApp`
+2.) `$ cd <directory of app>`
 
 3.) `$ yarn start`
 
