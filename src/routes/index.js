@@ -11,7 +11,7 @@ export default () => (
             <Container fluid className="mainContainer" id="mc1">
                 <Switch>
                     <Route exact path='/' component={Home} />
-                    <Redirect from="*" to="/" />
+                    <Redirect to="/" />
                 </Switch>
             </Container>
         </div>
