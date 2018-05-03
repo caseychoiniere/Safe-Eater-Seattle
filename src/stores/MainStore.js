@@ -140,8 +140,8 @@ export class MainStore {
         });
 
         violationTypes.forEach((value, key) => {
-            let red = value.filter(v => v === 'red').length;
-            let blue = value.filter(v => v === 'blue').length;
+            let red = value.filter(v => v.toUpperCase() === 'RED').length;
+            let blue = value.filter(v => v.toUpperCase() === 'BLUE').length;
             typeGraph.push({date: key, red_violations: red, blue_violations: blue})
         });
 
