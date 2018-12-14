@@ -1,6 +1,11 @@
 {
   "name": "Safe-Eater-Seattle",
   "version": "0.1.0",
+  "author": {
+    "name": "Casey Choiniere",
+    "email": "caseychoiniere@gmail.com",
+    "url": "https://github.com/caseychoiniere"
+  },
   "private": true,
   "dependencies": {
     "material-ui": "^0.19.4",

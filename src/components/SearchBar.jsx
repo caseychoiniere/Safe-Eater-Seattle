@@ -30,7 +30,7 @@ class SearchBar extends Component {
             searchBar: {
                 backgroundColor: grey50,
                 position: 'fixed',
-                zIndex: 1100,
+                zIndex: 1500,
                 width: '100%',
                 display: 'flex',
                 height: 64,
@@ -77,7 +77,7 @@ class SearchBar extends Component {
                 <CircularProgress size={24} thickness={2} color={pink900} style={styles.searchBar.searchLoading}/>}
             <TextField
                 ref="searchInput"
-                hintText="Search"
+                hintText="Search (name, zipcode, address etc.)"
                 hintStyle={styles.searchBar.hintText}
                 onKeyUp={() => this.search()}
                 style={styles.searchBar.textField}
@@ -99,16 +99,6 @@ class SearchBar extends Component {
         MainStore.toggleSearch();
     }
 }
-
-// Search.childContextTypes = {
-//     muiTheme: React.PropTypes.object
-// };
-//
-// Search.propTypes = {
-//     searchValue: string,
-//     showSearch: bool,
-//     screenSize: object
-// };
 
 export default SearchBar;
 

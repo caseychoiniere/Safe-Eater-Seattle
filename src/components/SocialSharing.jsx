@@ -8,8 +8,8 @@ import Share from 'material-ui/svg-icons/social/share';
 import {
     FacebookShareButton,
     FacebookIcon,
-    GooglePlusShareButton,
-    GooglePlusIcon,
+    RedditShareButton,
+    RedditIcon,
     TwitterShareButton,
     TwitterIcon} from 'react-share';
 
@@ -73,12 +73,12 @@ class SocialSharing extends Component {
                             >
                                 <TwitterIcon size={32} round />
                             </TwitterShareButton>
-                            <GooglePlusShareButton
+                            <RedditShareButton
                                 url={shareUrl}
                                 style={this.getIconCss('share','gp')}
                             >
-                                <GooglePlusIcon size={32} round />
-                            </GooglePlusShareButton>
+                                <RedditIcon size={32} round />
+                            </RedditShareButton>
                         </span>
                     }
                 </div>
