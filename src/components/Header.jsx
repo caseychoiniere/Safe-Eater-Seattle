@@ -37,7 +37,7 @@ class Header extends Component {
     render() {
         const { showSearch } = MainStore;
         const style = {
-            appBar: {position: 'fixed', backgroundColor: green700},
+            appBar: {position: 'fixed', backgroundColor: green700, zIndex: 1500},
             logo: {maxWidth: 64, position: 'absolute', top: 10, left: 60}
         };
 
@@ -45,6 +45,8 @@ class Header extends Component {
             showSearch ? <SearchBar /> :
                 <div>
                     <AppBar
+                        style={style.appBar}
+                        zDepth={2}
                         iconElementLeft={<span>
                             <IconButton>
                                 <Search onClick={this.toggleSearch} color={'#fff'}/>
@@ -52,10 +54,9 @@ class Header extends Component {
                             <img src={logo} alt="lemon" style={style.logo}/>
                         </span>}
                         iconElementRight={<span>
-                                            <SocialSharing />
-                                            {this.iconMenu()}
-                                          </span>}
-                        style={style.appBar}
+                            <SocialSharing />
+                            {this.iconMenu()}
+                        </span>}
                     />
                 </div>
         );
