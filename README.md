@@ -14,7 +14,9 @@ Mobx was added without ejecting the app via the [Custom React Scripts](https://w
 
 2.) `$ cd <directory of app>`
 
-3.) `$ yarn start`
+3.) `$ yarn install`
+
+4.) `$ yarn start`
 
 For the project to build, **these files must exist with exact filenames**:
 
