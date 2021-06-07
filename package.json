@@ -24,7 +24,7 @@
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
-    "custom-react-scripts": "0.2.1"
+    "custom-react-scripts": "0.2.2"
   },
   "scripts": {
     "start": "PORT=1337 react-scripts start",
