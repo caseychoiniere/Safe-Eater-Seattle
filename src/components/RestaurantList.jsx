@@ -88,7 +88,7 @@ class RestaurantList extends Component {
             }
         } else {
             if(nestedViolation !== 'no violations') {
-                return <Warning style={style.smallIcon} color={nestedViolation === 'blue' ? blue300 : red300}/>
+                return <Warning style={style.smallIcon} color={nestedViolation.toLowerCase() === 'blue' ? blue300 : red300}/>
             } else {
                 return <ThumbUp style={style.smallIcon} color={green300}/>
             }
