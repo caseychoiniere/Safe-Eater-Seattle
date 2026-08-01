@@ -1,4 +1,4 @@
-const BASE_URI = 'https://data.kingcounty.gov/resource/gkhn-e8mn.json?';
+const BASE_URI = 'https://data.kingcounty.gov/resource/r878-4sxa.json?';
 
 const api = {
     getRestaurantListData: (params) => fetch(`${BASE_URI}${params}`),
