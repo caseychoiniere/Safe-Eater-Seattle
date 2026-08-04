@@ -160,20 +160,72 @@ export class MainStore {
         });
     }
 
+    @action fetchAllRestaurantRows(baseQuery) {
+        const pageSize = 1000;
+        const allRows = [];
+
+        const fetchPage = offset => {
+            const separator = baseQuery.length ? '&' : '';
+
+            const query = `${baseQuery}${separator}$limit=${pageSize}&$offset=${offset}`;
+
+            return this.api
+                .getRestaurantListData(query)
+                .then(checkStatus)
+                .then(response => response.json())
+                .then(rows => {
+                    allRows.push(...rows);
+
+                    if (rows.length === pageSize) {
+                        return fetchPage(offset + pageSize);
+                    }
+
+                    return allRows;
+                });
+        };
+
+        return fetchPage(0);
+    }
+
     @action getRestaurantListData(isSearch, searchQuery) {
-        const limit = !isSearch ? 2000 : 10000;
-        const query = !isSearch ? '' : `$q=${searchQuery}&`;
-        this.loading= true;
-        if(!this.dateRange) this.dateRange = this.setDateRange(12);
-        const now = moment().toISOString().slice(0,-1);
-        this.api.getRestaurantListData(`${query}$limit=${limit}&$where=inspection_date between '${this.dateRange}' and '${now}'&city=SEATTLE`)
-            .then(checkStatus).then(response => response.json())
-            .then((json) => {
+        this.loading = true;
+
+        if (!this.dateRange) {
+            this.dateRange = this.setDateRange(12);
+        }
+
+        const now = moment()
+            .toISOString()
+            .slice(0, -1);
+
+        const queryParts = [
+            `$where=inspection_date between '${this.dateRange}' and '${now}'`,
+            'city=SEATTLE'
+        ];
+
+        if (isSearch && searchQuery) {
+            queryParts.unshift(`$q=${encodeURIComponent(searchQuery)}`);
+        }
+
+        const baseQuery = queryParts.join('&');
+
+        this.fetchAllRestaurantRows(baseQuery)
+            .then(json => {
                 const data = this.filterData(json);
-                if(!isSearch) this.restaurants = this.formatData(data);
-                if(isSearch) this.restaurantsSearchResults = this.formatData(data);
+
+                if (isSearch) {
+                    this.restaurantsSearchResults =
+                        this.formatData(data);
+                } else {
+                    this.restaurants =
+                        this.formatData(data);
+                }
+
                 this.loading = false;
-            }).catch(ex => this.handleErrors(ex))
+            })
+            .catch(error => {
+                this.handleErrors(error);
+            });
     }
 
     @action getMapObject(map) {
