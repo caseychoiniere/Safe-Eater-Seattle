@@ -169,8 +169,11 @@ export class MainStore {
         this.api.getRestaurantListData(`${query}$limit=${limit}&$where=inspection_date between '${this.dateRange}' and '${now}'&city=SEATTLE`)
             .then(checkStatus).then(response => response.json())
             .then((json) => {
+                console.log('getRestaurantListData', json);
                 const data = this.filterData(json);
+                console.log('getRestaurantListDataFiltered', data);
                 if(!isSearch) this.restaurants = this.formatData(data);
+                console.log('getRestaurants', this.restaurants);
                 if(isSearch) this.restaurantsSearchResults = this.formatData(data);
                 this.loading = false;
             }).catch(ex => this.handleErrors(ex))
