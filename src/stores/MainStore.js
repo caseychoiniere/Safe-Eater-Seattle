@@ -287,6 +287,34 @@ export class MainStore {
                 .trim();
         };
 
+        const findPlaceFromQuery = query => {
+            return new Promise((resolve, reject) => {
+                placesService.findPlaceFromQuery(
+                    {
+                        query,
+                        fields: [
+                            'place_id',
+                            'name',
+                            'formatted_address',
+                            'geometry'
+                        ]
+                    },
+                    (results, status) => {
+                        if (
+                            status ===
+                            google.maps.places.PlacesServiceStatus.OK &&
+                            results &&
+                            results.length
+                        ) {
+                            resolve(results[0]);
+                        } else {
+                            reject(status);
+                        }
+                    }
+                );
+            });
+        };
+
         geocodeRestaurant()
             .then(geocodeResult => {
                 const googleLocation =
