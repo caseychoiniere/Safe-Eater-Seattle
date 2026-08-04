@@ -101,9 +101,9 @@ export class MainStore {
                 id: j.business_id,
                 name: j.name,
                 address: j.address,
+                city: j.city,
+                zip_code: j.zip_code,
                 phone: j.phone,
-                lat: parseFloat(j.latitude),
-                lng: parseFloat(j.longitude),
                 inspection_date: j.inspection_date,
                 inspection_closed_business: j.inspection_closed_business,
                 inspection_serial_num: j.inspection_serial_num,
@@ -277,7 +277,18 @@ export class MainStore {
 
         geocodeRestaurant()
             .then(geocodeResult => {
-                const location = geocodeResult.geometry.location;
+                const googleLocation = geocodeResult.geometry.location;
+
+                const location = {
+                    lat: googleLocation.lat(),
+                    lng: googleLocation.lng()
+                };
+
+                this.selectedRestaurant.lat = location.lat;
+                this.selectedRestaurant.lng = location.lng;
+
+                this.mapObj.setCenter(location);
+                this.mapObj.setZoom(16);
 
                 return nearbySearch(location)
                     .then(places => {
