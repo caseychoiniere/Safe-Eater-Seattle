@@ -5,11 +5,13 @@ import { checkStatus } from '../util/fetchUtil';
 const google = window.google;
 
 export class MainStore {
+    @observable activeRestaurantSearch;
     @observable averagePointsPerInspection;
     @observable averagePointsPerInspectionAllTime;
     @observable dateRange;
     @observable graphData;
     @observable graphDataAllTime;
+    @observable hasMoreRestaurants;
     @observable hours;
     @observable loading;
     @observable mapObj;
@@ -19,6 +21,9 @@ export class MainStore {
     @observable paginationLoading;
     @observable rating;
     @observable restaurants;
+    @observable restaurantOffset;
+    @observable restaurantPageSize;
+    @observable restaurantSearchMode;
     @observable restaurantsSearchResults;
     @observable reviews;
     @observable searchLoading;
@@ -42,6 +47,7 @@ export class MainStore {
         this.dateRange = null;
         this.graphData = [];
         this.graphDataAllTime = [];
+        this.hasMoreRestaurants = true;
         this.hours = [];
         this.loading = false;
         this.mapObj = null;
@@ -51,6 +57,8 @@ export class MainStore {
         this.paginationLoading = false;
         this.rating = null;
         this.restaurants = [];
+        this.restaurantOffset = 0;
+        this.restaurantPageSize = 1000;
         this.restaurantsSearchResults = null;
         this.reviews = [];
         this.searchLoading = false;
@@ -187,8 +195,34 @@ export class MainStore {
         return fetchPage(0);
     }
 
-    @action getRestaurantListData(isSearch, searchQuery) {
-        this.loading = true;
+    @action getRestaurantListData(isSearch, searchQuery, loadMore = false) {
+        const pageSize = this.restaurantPageSize;
+
+        const effectiveIsSearch = loadMore
+            ? this.restaurantSearchMode
+            : Boolean(isSearch);
+
+        const effectiveSearchQuery = loadMore
+            ? this.activeRestaurantSearch
+            : (searchQuery || '');
+
+        if (!loadMore) {
+            this.restaurantOffset = 0;
+            this.hasMoreRestaurants = true;
+            this.restaurantSearchMode = effectiveIsSearch;
+            this.activeRestaurantSearch = effectiveSearchQuery;
+
+            if (effectiveIsSearch) {
+                this.restaurantsSearchResults = [];
+            } else {
+                this.restaurants = [];
+                this.restaurantsSearchResults = null;
+            }
+
+            this.loading = true;
+        } else {
+            this.paginationLoading = true;
+        }
 
         if (!this.dateRange) {
             this.dateRange = this.setDateRange(12);
@@ -198,34 +232,152 @@ export class MainStore {
             .toISOString()
             .slice(0, -1);
 
+        const whereClause =
+            `inspection_date between '${this.dateRange}' and '${now}'`;
+
         const queryParts = [
-            `$where=inspection_date between '${this.dateRange}' and '${now}'`,
-            'city=SEATTLE'
+            `$limit=${pageSize}`,
+            `$offset=${this.restaurantOffset}`,
+            `$where=${encodeURIComponent(whereClause)}`,
+            `city=${encodeURIComponent('SEATTLE')}`,
+            `$order=${encodeURIComponent(
+                'inspection_date DESC, inspection_serial_num ASC'
+            )}`
         ];
 
-        if (isSearch && searchQuery) {
-            queryParts.unshift(`$q=${encodeURIComponent(searchQuery)}`);
+        if (effectiveIsSearch && effectiveSearchQuery) {
+            queryParts.push(
+                `$q=${encodeURIComponent(effectiveSearchQuery)}`
+            );
         }
 
-        const baseQuery = queryParts.join('&');
+        const query = queryParts.join('&');
 
-        this.fetchAllRestaurantRows(baseQuery)
-            .then(json => {
-                const data = this.filterData(json);
+        return this.api
+            .getRestaurantListData(query)
+            .then(checkStatus)
+            .then(response => response.json())
+            .then(action(json => {
+                /*
+                 * filterData mutates its input with splice(), so pass
+                 * it a copy rather than the original API response.
+                 */
+                const filteredRows = this.filterData([...json]);
+                const formattedRows = this.formatData(filteredRows);
 
-                if (isSearch) {
-                    this.restaurantsSearchResults =
-                        this.formatData(data);
+                if (effectiveIsSearch) {
+                    this.restaurantsSearchResults = loadMore
+                        ? this.mergeRestaurants(
+                            this.restaurantsSearchResults || [],
+                            formattedRows
+                        )
+                        : formattedRows;
                 } else {
-                    this.restaurants =
-                        this.formatData(data);
+                    this.restaurants = loadMore
+                        ? this.mergeRestaurants(
+                            this.restaurants,
+                            formattedRows
+                        )
+                        : formattedRows;
                 }
 
+                /*
+                 * Advance by the raw number of API records received,
+                 * not the number left after filtering or formatting.
+                 */
+                this.restaurantOffset += json.length;
+
+                /*
+                 * If fewer than 1,000 rows were returned, we reached
+                 * the final page.
+                 */
+                this.hasMoreRestaurants =
+                    json.length === pageSize;
+
                 this.loading = false;
-            })
-            .catch(error => {
+                this.paginationLoading = false;
+            }))
+            .catch(action(error => {
+                console.error('Unable to load restaurant data:', error);
+
+                this.loading = false;
+                this.paginationLoading = false;
                 this.handleErrors(error);
+            }));
+    }
+
+    @action loadMoreRestaurants() {
+        if (
+            this.paginationLoading ||
+            !this.hasMoreRestaurants
+        ) {
+            return;
+        }
+
+        return this.getRestaurantListData(
+            this.restaurantSearchMode,
+            this.activeRestaurantSearch,
+            true
+        );
+    }
+
+    @action mergeRestaurants(existingRestaurants, newRestaurants) {
+        const restaurantsById = new Map();
+
+        existingRestaurants.forEach(restaurant => {
+            restaurantsById.set(restaurant.id, {
+                ...restaurant,
+                violations: [...restaurant.violations]
             });
+        });
+
+        newRestaurants.forEach(restaurant => {
+            if (!restaurantsById.has(restaurant.id)) {
+                restaurantsById.set(restaurant.id, restaurant);
+                return;
+            }
+
+            const existing = restaurantsById.get(restaurant.id);
+
+            const violations = [
+                ...existing.violations,
+                ...restaurant.violations
+            ];
+
+            const uniqueViolations = violations.filter(
+                (violation, index, allViolations) => {
+                    return allViolations.findIndex(candidate => {
+                        return (
+                            candidate.violation_date ===
+                            violation.violation_date &&
+                            candidate.violation_type ===
+                            violation.violation_type &&
+                            candidate.violation_description ===
+                            violation.violation_description &&
+                            candidate.violation_points ===
+                            violation.violation_points
+                        );
+                    }) === index;
+                }
+            );
+
+            restaurantsById.set(restaurant.id, {
+                ...existing,
+                ...restaurant,
+                violations: uniqueViolations.sort(
+                    (a, b) =>
+                        new Date(a.violation_date) -
+                        new Date(b.violation_date)
+                )
+            });
+        });
+
+        return Array.from(restaurantsById.values())
+            .sort(
+                (a, b) =>
+                    b.violations.length -
+                    a.violations.length
+            );
     }
 
     @action getMapObject(map) {
