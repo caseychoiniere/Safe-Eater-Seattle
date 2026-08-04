@@ -275,9 +275,22 @@ export class MainStore {
             });
         };
 
+        const cleanRestaurantName = name => {
+            return name
+                .replace(/\bLLC\b/gi, '')
+                .replace(/\bINC\b/gi, '')
+                .replace(/\bCORP(?:ORATION)?\b/gi, '')
+                .replace(/\bLTD\b/gi, '')
+                .replace(/[#@]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .replace(/[,\s]+$/, '')
+                .trim();
+        };
+
         geocodeRestaurant()
             .then(geocodeResult => {
-                const googleLocation = geocodeResult.geometry.location;
+                const googleLocation =
+                    geocodeResult.geometry.location;
 
                 const location = {
                     lat: googleLocation.lat(),
@@ -290,12 +303,16 @@ export class MainStore {
                 this.mapObj.setCenter(location);
                 this.mapObj.setZoom(16);
 
-                return nearbySearch(location)
-                    .then(places => {
-                        const bestMatch = places[0];
+                const cleanedName =
+                    cleanRestaurantName(restaurant.name);
 
-                        return findDetails(bestMatch.place_id);
-                    });
+                const nameAndAddressQuery =
+                    `${cleanedName}, ${fullAddress}`;
+
+                return findPlaceFromQuery(nameAndAddressQuery)
+                    .catch(() => nearbySearch(location))
+                    .catch(() => findPlaceFromQuery(fullAddress))
+                    .then(place => findDetails(place.place_id));
             })
             .then(details => {
                 this.hours = details.opening_hours
@@ -303,20 +320,26 @@ export class MainStore {
                     : [];
 
                 this.reviews = details.reviews || [];
+
                 this.rating =
                     typeof details.rating === 'number'
                         ? details.rating
                         : null;
             })
             .catch(error => {
-                console.error(
-                    'Unable to locate restaurant in Google Places:',
-                    {
-                        restaurant: restaurant.name,
-                        address: fullAddress,
-                        error
-                    }
-                );
+                if (
+                    error !==
+                    google.maps.places.PlacesServiceStatus.ZERO_RESULTS
+                ) {
+                    console.error(
+                        'Google Places lookup failed:',
+                        {
+                            restaurant: restaurant.name,
+                            address: fullAddress,
+                            error
+                        }
+                    );
+                }
 
                 this.hours = [];
                 this.reviews = [];
