@@ -97,7 +97,6 @@ export class MainStore {
             }
             return res;
         }, []).map((j) => {
-            console.log('formatData', j);
             return {
                 id: j.business_id,
                 name: j.name,
@@ -170,11 +169,8 @@ export class MainStore {
         this.api.getRestaurantListData(`${query}$limit=${limit}&$where=inspection_date between '${this.dateRange}' and '${now}'&city=SEATTLE`)
             .then(checkStatus).then(response => response.json())
             .then((json) => {
-                console.log('getRestaurantListData', json);
                 const data = this.filterData(json);
-                console.log('getRestaurantListDataFiltered', data);
                 if(!isSearch) this.restaurants = this.formatData(data);
-                console.log('getRestaurants', this.restaurants);
                 if(isSearch) this.restaurantsSearchResults = this.formatData(data);
                 this.loading = false;
             }).catch(ex => this.handleErrors(ex))
@@ -182,46 +178,139 @@ export class MainStore {
 
     @action getMapObject(map) {
         const restaurant = this.selectedRestaurant;
-        console.log('getMapObject', map, restaurant);
-        if(map) {
-            this.mapObj = map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-            const loc = {lat: restaurant.lat, lng: restaurant.lng};
-            const _map = this.mapObj;
-            const service = new google.maps.places.PlacesService(_map);
 
-            const nearbySearch = () => {
-                const request = {
-                    location: loc,
-                    radius: 1000,
-                    keyword: restaurant.name
-                };
-                return new Promise((resolve, reject) => {
-                    service.nearbySearch(request, (results, status) => {
-                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(results) : reject(status);
-                    });
-                });
+        if (!map || !restaurant) return;
+
+        this.mapObj =
+            map.context.__SECRET_MAP_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+
+        const placesService =
+            new google.maps.places.PlacesService(this.mapObj);
+
+        const geocoder = new google.maps.Geocoder();
+
+        const fullAddress = [
+            restaurant.address,
+            restaurant.city,
+            'WA',
+            restaurant.zip_code
+        ]
+            .filter(Boolean)
+            .join(', ');
+
+        const geocodeRestaurant = () => {
+            return new Promise((resolve, reject) => {
+                geocoder.geocode(
+                    {
+                        address: fullAddress,
+                        componentRestrictions: {
+                            country: 'US'
+                        }
+                    },
+                    (results, status) => {
+                        if (
+                            status === google.maps.GeocoderStatus.OK &&
+                            results &&
+                            results.length
+                        ) {
+                            resolve(results[0]);
+                        } else {
+                            reject(status);
+                        }
+                    }
+                );
+            });
+        };
+
+        const nearbySearch = location => {
+            const request = {
+                location,
+                radius: 100,
+                keyword: restaurant.name
             };
 
-            const findDetail = (place) => {
-                return new Promise((resolve, reject) => {
-                    service.getDetails({placeId: place.place_id}, (place, status) => {
-                        status === google.maps.places.PlacesServiceStatus.OK ? resolve(place) : reject(status);
-                    });
-                });
-            };
+            return new Promise((resolve, reject) => {
+                placesService.nearbySearch(
+                    request,
+                    (results, status) => {
+                        if (
+                            status ===
+                            google.maps.places.PlacesServiceStatus.OK &&
+                            results &&
+                            results.length
+                        ) {
+                            resolve(results);
+                        } else {
+                            reject(status);
+                        }
+                    }
+                );
+            });
+        };
 
-            nearbySearch()
-                .then(results => findDetail(results[0]))
-                .then(details => {
-                    if(details.opening_hours) this.hours = details.opening_hours.weekday_text;
-                    if(details.reviews) this.reviews = details.reviews;
-                    if(details.rating) this.rating = details.rating;
-                }).catch(() => {
+        const findDetails = placeId => {
+            return new Promise((resolve, reject) => {
+                placesService.getDetails(
+                    {
+                        placeId,
+                        fields: [
+                            'name',
+                            'formatted_address',
+                            'opening_hours',
+                            'reviews',
+                            'rating'
+                        ]
+                    },
+                    (details, status) => {
+                        if (
+                            status ===
+                            google.maps.places.PlacesServiceStatus.OK
+                        ) {
+                            resolve(details);
+                        } else {
+                            reject(status);
+                        }
+                    }
+                );
+            });
+        };
+
+        geocodeRestaurant()
+            .then(geocodeResult => {
+                const location = geocodeResult.geometry.location;
+
+                return nearbySearch(location)
+                    .then(places => {
+                        const bestMatch = places[0];
+
+                        return findDetails(bestMatch.place_id);
+                    });
+            })
+            .then(details => {
+                this.hours = details.opening_hours
+                    ? details.opening_hours.weekday_text
+                    : [];
+
+                this.reviews = details.reviews || [];
+                this.rating =
+                    typeof details.rating === 'number'
+                        ? details.rating
+                        : null;
+            })
+            .catch(error => {
+                console.error(
+                    'Unable to locate restaurant in Google Places:',
+                    {
+                        restaurant: restaurant.name,
+                        address: fullAddress,
+                        error
+                    }
+                );
+
                 this.hours = [];
                 this.reviews = [];
                 this.rating = null;
-            })
-        }
+            });
     }
 
     @action getRestaurantData(restaurant) {
