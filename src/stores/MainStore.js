@@ -97,6 +97,7 @@ export class MainStore {
             }
             return res;
         }, []).map((j) => {
+            console.log('formatData', j);
             return {
                 id: j.business_id,
                 name: j.name,
